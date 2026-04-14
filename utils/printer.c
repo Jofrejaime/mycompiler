@@ -92,3 +92,67 @@ void save_symbol_table(const char *output_file, lexer_t *lexer, int error_count)
     
     fclose(fp);
 }
+
+/* ============================================================================
+   FUNCOES DE LOGICA PRINCIPAL
+   ============================================================================ */
+
+int validate_args(int argc, char *argv[], const char **input, const char **output) {
+    if (argc < 2) {
+        fprintf(stderr, "ERRO: Numero de argumentos invalido\n\n");
+        print_usage(argv[0]);
+        return 1;
+    }
+    
+    *input = argv[1];
+    *output = (argc >= 3) ? argv[2] : "tabela_simbolos.txt";
+    
+    printf("Arquivo de entrada: %s\n", *input);
+    printf("Arquivo de saida:   %s\n\n", *output);
+    
+    return 0;
+}
+
+lexer_t* run_lexical_analysis(const char *input, const char *output, int *error_count) {
+    printf("Criando lexer...\n");
+    lexer_t *lexer = criar_lexer(input);
+    
+    if (lexer == NULL) {
+        fprintf(stderr, "ERRO: Nao foi possivel abrir arquivo '%s'\n", input);
+        return NULL;
+    }
+    
+    printf("OK: lexer criado\n\n");
+    printf("Executando analise lexica...\n");
+    printf("-----------------------------------\n\n");
+    
+    token_t token;
+    *error_count = 0;
+    
+    do {
+        token = analex(lexer);
+        
+        if (token.tipo == TK_ERROR) {
+            printf("ERRO na linha %d, coluna %d: '%s'\n", 
+                   token.linha, token.coluna, token.lexeme);
+            (*error_count)++;
+        }
+    } while (token.tipo != TK_EOF);
+    
+    printf("\n-----------------------------------\n");
+    printf("OK: Analise lexica concluida\n\n");
+    printf("Tabela de simbolos:\n\n");
+    imprimir_tabla_simbolos(lexer->tabla_simbolos);
+    
+    printf("\nSalvando em '%s'...\n", output);
+    save_symbol_table(output, lexer, *error_count);
+    printf("OK: Resultado salvo\n");
+    
+    return lexer;
+}
+
+void cleanup(lexer_t *lexer) {
+    printf("Liberando recursos...\n");
+    liberar_lexer(lexer);
+    printf("OK: Programa finalizado com sucesso!\n\n");
+}
