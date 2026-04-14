@@ -106,7 +106,7 @@ test_*.sh
 # MANTER: README.md, mu.md, mp.md, CompiladorAutomatos.jff
 # IGNORAR: Resto de documentacao gerada automaticamente
 # ============================================================================
-ARQUITETURA_COMPILADOR.md
+ESTRUCTURA.md
 AS_7_FASES_COMPILACAO.md
 GUIA_COMPLETO_COMPILADOR.md
 PLANO_COMPILADOR_COMPLETO.md
@@ -117,8 +117,8 @@ DIAGRAMA_TRANSICOES.md
 GUIA_PRATICO_CORRECOES.md
 ESTRUTURA_OTIMIZADA.md
 INDICE.md
-ESTRUCTURA.md
-docs/RELATORIO_*.md
+docs/
+automato/
 mp.backup.md
 mu.backup.md
 
