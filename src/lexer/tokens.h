@@ -109,6 +109,15 @@
 #define SYM_COLON       213     /* : */
 #define SYM_TERNARY     214     /* ? */
 
+/* Diretivas de Pré-processador */
+#define TK_PP_INCLUDE   250     /* #include */
+#define TK_PP_DEFINE    251     /* #define */
+#define TK_PP_IFDEF     252     /* #ifdef */
+#define TK_PP_IFNDEF    253     /* #ifndef */
+#define TK_PP_ENDIF     254     /* #endif */
+#define TK_PP_PRAGMA    255     /* #pragma */
+#define TK_PP_OTHER     256     /* #... (outras) */
+
 /* Fim de Arquivo e Erro */
 #define TK_EOF          300
 #define TK_ERROR        301
@@ -148,6 +157,9 @@ tabla_simbolos_t* criar_tabla_simbolos(int capacidade_inicial);
 
 /* Adicionar token à tabela */
 void adicionar_token(tabla_simbolos_t *ts, token_t t);
+
+/* Reconhecer tipo de preprocessor */
+int identificar_preprocessor(const char *lexema);
 
 /* Liberar memória da tabela */
 void liberar_tabla_simbolos(tabla_simbolos_t *ts);

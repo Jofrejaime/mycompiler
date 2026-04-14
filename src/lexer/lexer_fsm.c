@@ -84,7 +84,10 @@ typedef enum {
     Q31_CHAR_ESCAPE,    /* Após \ em char */
     Q32_CHAR_AWAIT,     /* Aguardando ' */
     Q33_RESERVED,       /* Reservado */
-    Q34_RESERVED        /* Reservado */
+    Q34_RESERVED,       /* Reservado */
+    
+    /* G9 - Pré-processador */
+    Q35_PP_DIRECTIVE    /* Dentro de diretiva #... */
 } Estado_FSM;
 
 /* ============================================================================
@@ -175,6 +178,10 @@ token_t fsm_next_token(lexer_t *lexer) {
             else if (c == '%') {
                 buffer[0] = c;
                 return RETURN_TOKEN(lexer, OP_MOD, "%");
+            }
+            else if (c == '#') {
+                buffer[buffer_pos++] = c;
+                estado = Q35_PP_DIRECTIVE;
             }
             else if (c == '\0') {
                 return (token_t){TK_EOF, "", lexer->linha, lexer->coluna, {0}};
@@ -469,6 +476,29 @@ token_t fsm_next_token(lexer_t *lexer) {
                 return (token_t){TK_ERROR, "Invalid char literal",
                                 lexer->linha_inicio_lexema,
                                 lexer->coluna_inicio_lexema, {0}};
+            }
+            break;
+        
+        /* ═════════════════════════════════════════════════════════════════ */
+        /* G9/Q35: DIRETIVAS DE PRE-PROCESSADOR (#include, #define, etc)   */
+        /* ═════════════════════════════════════════════════════════════════ */
+        case Q35_PP_DIRECTIVE:
+            if (c == '\n' || c == '\0') {
+                /* Fim da diretiva */
+                buffer[buffer_pos] = '\0';
+                
+                /* Identificar tipo de preprocessor */
+                int tipo_pp = identificar_preprocessor(buffer);
+                
+                /* Retracar o \n ou \0 para proximo token */
+                volta_caractere(lexer, c);
+                
+                return RETURN_TOKEN(lexer, tipo_pp, buffer);
+            } else {
+                /* Continua acumulando caracteres da diretiva */
+                if (buffer_pos < 255) {
+                    buffer[buffer_pos++] = c;
+                }
             }
             break;
         

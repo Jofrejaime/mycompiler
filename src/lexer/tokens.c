@@ -185,6 +185,15 @@ const char* tipo_token_para_string(int tipo) {
         case SYM_COLON:     return "SYM_COLON (:)";
         case SYM_TERNARY:   return "SYM_TERNARY (?)";
         
+        /* Diretivas de pré-processador */
+        case TK_PP_INCLUDE: return "PP_INCLUDE";
+        case TK_PP_DEFINE:  return "PP_DEFINE";
+        case TK_PP_IFDEF:   return "PP_IFDEF";
+        case TK_PP_IFNDEF:  return "PP_IFNDEF";
+        case TK_PP_ENDIF:   return "PP_ENDIF";
+        case TK_PP_PRAGMA:  return "PP_PRAGMA";
+        case TK_PP_OTHER:   return "PP_OTHER";
+        
         /* Especiais */
         case TK_EOF:        return "EOF";
         case TK_ERROR:      return "ERRO";
@@ -230,4 +239,39 @@ void imprimir_tabla_simbolos(tabla_simbolos_t *ts) {
     printf("+--------+-------------------------+----------------+-------+--------+-------+\n");
     printf("| TOTAL DE TOKENS: %-62d |\n", ts->quantidade);
     printf("+--------+-------------------------+----------------+-------+--------+-------+\n");
+}
+
+/* ============================================================================
+   FUNCAO: Identificar tipo de preprocessor
+   
+   Analisa o lexema de um preprocessor token (ex: "include <stdio.h>")
+   e retorna o tipo apropriado (TK_PP_INCLUDE, TK_PP_DEFINE, etc)
+   
+   ============================================================================ */
+int identificar_preprocessor(const char *lexema) {
+    if (lexema == NULL || lexema[0] == '\0')
+        return TK_PP_OTHER;
+    
+    /* Pular # e espacos iniciais */
+    int i = 0;
+    if (lexema[i] == '#') i++;  /* Pular # */
+    while (lexema[i] == ' ' || lexema[i] == '\t') i++;  /* Pular espaços */
+    
+    /* Comparar diretivas comuns */
+    if (strncmp(&lexema[i], "include", 7) == 0) {
+        return TK_PP_INCLUDE;
+    } else if (strncmp(&lexema[i], "define", 6) == 0) {
+        return TK_PP_DEFINE;
+    } else if (strncmp(&lexema[i], "ifdef", 5) == 0) {
+        return TK_PP_IFDEF;
+    } else if (strncmp(&lexema[i], "ifndef", 6) == 0) {
+        return TK_PP_IFNDEF;
+    } else if (strncmp(&lexema[i], "endif", 5) == 0) {
+        return TK_PP_ENDIF;
+    } else if (strncmp(&lexema[i], "pragma", 6) == 0) {
+        return TK_PP_PRAGMA;
+    }
+    
+    /* Outra diretiva nao reconhecida */
+    return TK_PP_OTHER;
 }
