@@ -1,0 +1,496 @@
+═══════════════════════════════════════════════════════════════
+    TABELA DE SÍMBOLOS - ANÁLISE LÉXICA
+═══════════════════════════════════════════════════════════════
+
+Arquivo analisado: teste_entrada.c
+Total de tokens: 479
+Erros léxicos: 1
+
+TOKENS ENCONTRADOS:
+───────────────────────────────────────────────────────────────
+Nº   │ Tipo                │ Lexema         │ Linha │ Coluna
+─────┼─────────────────────┼────────────────┼───────┼─────────
+  1  │ IDENTIFICADOR       │ include        │     4 │     3
+  2  │ OP_LT (<)           │ <              │     4 │    10
+  3  │ IDENTIFICADOR       │ stdio          │     4 │    10
+  4  │ SYM_DOT (.)         │ .              │     4 │    14
+  5  │ IDENTIFICADOR       │ h              │     4 │    15
+  6  │ OP_GT (>)           │ >              │     4 │    15
+  7  │ KW_INT              │ int            │    10 │     2
+  8  │ IDENTIFICADOR       │ fibonacci      │    10 │     5
+  9  │ SYM_LPAREN ())      │ (              │    10 │    13
+ 10  │ KW_INT              │ int            │    10 │    14
+ 11  │ IDENTIFICADOR       │ n              │    10 │    17
+ 12  │ SYM_RPAREN ())      │ )              │    10 │    17
+ 13  │ SYM_LBRACE ({)      │ {              │    10 │    19
+ 14  │ KW_IF               │ if             │    11 │     6
+ 15  │ SYM_LPAREN ())      │ (              │    11 │     8
+ 16  │ IDENTIFICADOR       │ n              │    11 │     9
+ 17  │ OP_LE (<=)          │ <=             │    11 │    10
+ 18  │ NUM_INT             │ 1              │    11 │    13
+ 19  │ SYM_RPAREN ())      │ )              │    11 │    13
+ 20  │ KW_RETURN           │ return         │    12 │    10
+ 21  │ IDENTIFICADOR       │ n              │    12 │    16
+ 22  │ SYM_SEMICOLON (;)   │ ;              │    12 │    16
+ 23  │ KW_ELSE             │ else           │    13 │     6
+ 24  │ KW_RETURN           │ return         │    13 │    10
+ 25  │ IDENTIFICADOR       │ fibonacci      │    13 │    16
+ 26  │ SYM_LPAREN ())      │ (              │    13 │    24
+ 27  │ IDENTIFICADOR       │ n              │    13 │    25
+ 28  │ OP_MINUS (-)        │ -              │    13 │    26
+ 29  │ NUM_INT             │ 1              │    13 │    27
+ 30  │ SYM_RPAREN ())      │ )              │    13 │    27
+ 31  │ OP_PLUS (+)         │ +              │    13 │    29
+ 32  │ IDENTIFICADOR       │ fibonacci      │    13 │    30
+ 33  │ SYM_LPAREN ())      │ (              │    13 │    38
+ 34  │ IDENTIFICADOR       │ n              │    13 │    39
+ 35  │ OP_MINUS (-)        │ -              │    13 │    40
+ 36  │ NUM_INT             │ 2              │    13 │    41
+ 37  │ SYM_RPAREN ())      │ )              │    13 │    41
+ 38  │ SYM_SEMICOLON (;)   │ ;              │    13 │    42
+ 39  │ SYM_RBRACE (})      │ }              │    14 │     2
+ 40  │ KW_INT              │ int            │    16 │     2
+ 41  │ IDENTIFICADOR       │ main           │    16 │     5
+ 42  │ SYM_LPAREN ())      │ (              │    16 │     8
+ 43  │ SYM_RPAREN ())      │ )              │    16 │     9
+ 44  │ SYM_LBRACE ({)      │ {              │    16 │    11
+ 45  │ KW_INT              │ int            │    17 │     6
+ 46  │ IDENTIFICADOR       │ x              │    17 │     9
+ 47  │ OP_ASSIGN (=)       │ =              │    17 │    10
+ 48  │ NUM_INT             │ 10             │    17 │    11
+ 49  │ SYM_SEMICOLON (;)   │ ;              │    17 │    12
+ 50  │ KW_INT              │ int            │    18 │     6
+ 51  │ IDENTIFICADOR       │ y              │    18 │     9
+ 52  │ OP_ASSIGN (=)       │ =              │    18 │    10
+ 53  │ NUM_INT             │ 20             │    18 │    11
+ 54  │ SYM_SEMICOLON (;)   │ ;              │    18 │    12
+ 55  │ KW_FLOAT            │ float          │    19 │     6
+ 56  │ IDENTIFICADOR       │ resultado      │    19 │    11
+ 57  │ OP_ASSIGN (=)       │ =              │    19 │    20
+ 58  │ NUM_FLOAT           │ 3.14           │    19 │    21
+ 59  │ SYM_SEMICOLON (;)   │ ;              │    19 │    24
+ 60  │ KW_DOUBLE           │ double         │    20 │     6
+ 61  │ IDENTIFICADOR       │ valor_exp      │    20 │    12
+ 62  │ OP_ASSIGN (=)       │ =              │    20 │    21
+ 63  │ NUM_EXP             │ 1.5e-3         │    20 │    22
+ 64  │ SYM_SEMICOLON (;)   │ ;              │    20 │    27
+ 65  │ KW_CHAR             │ char           │    22 │     6
+ 66  │ IDENTIFICADOR       │ letra          │    22 │    10
+ 67  │ OP_ASSIGN (=)       │ =              │    22 │    15
+ 68  │ CHAR                │ 'A             │    22 │    16
+ 69  │ SYM_SEMICOLON (;)   │ ;              │    22 │    19
+ 70  │ KW_CHAR             │ char           │    23 │     6
+ 71  │ OP_MULT (*)         │ *              │    23 │    10
+ 72  │ IDENTIFICADOR       │ mensagem       │    23 │    10
+ 73  │ OP_ASSIGN (=)       │ =              │    23 │    18
+ 74  │ STRING              │ "Hello, World! │    23 │    19
+ 75  │ SYM_SEMICOLON (;)   │ ;              │    23 │    34
+ 76  │ KW_IF               │ if             │    25 │     6
+ 77  │ SYM_LPAREN ())      │ (              │    25 │     8
+ 78  │ IDENTIFICADOR       │ x              │    25 │     9
+ 79  │ OP_LT (<)           │ <              │    25 │    10
+ 80  │ IDENTIFICADOR       │ y              │    25 │    11
+ 81  │ SYM_RPAREN ())      │ )              │    25 │    11
+ 82  │ SYM_LBRACE ({)      │ {              │    25 │    13
+ 83  │ IDENTIFICADOR       │ printf         │    26 │    10
+ 84  │ SYM_LPAREN ())      │ (              │    26 │    15
+ 85  │ STRING              │ "x é menor que y\n │    26 │    16
+ 86  │ SYM_RPAREN ())      │ )              │    26 │    36
+ 87  │ SYM_SEMICOLON (;)   │ ;              │    26 │    37
+ 88  │ SYM_RBRACE (})      │ }              │    27 │     6
+ 89  │ KW_ELSE             │ else           │    27 │     8
+ 90  │ KW_IF               │ if             │    27 │    12
+ 91  │ SYM_LPAREN ())      │ (              │    27 │    14
+ 92  │ IDENTIFICADOR       │ x              │    27 │    15
+ 93  │ OP_GT (>)           │ >              │    27 │    16
+ 94  │ IDENTIFICADOR       │ y              │    27 │    17
+ 95  │ SYM_RPAREN ())      │ )              │    27 │    17
+ 96  │ SYM_LBRACE ({)      │ {              │    27 │    19
+ 97  │ IDENTIFICADOR       │ printf         │    28 │    10
+ 98  │ SYM_LPAREN ())      │ (              │    28 │    15
+ 99  │ STRING              │ "x é maior que y\n │    28 │    16
+100  │ SYM_RPAREN ())      │ )              │    28 │    36
+101  │ SYM_SEMICOLON (;)   │ ;              │    28 │    37
+102  │ SYM_RBRACE (})      │ }              │    29 │     6
+103  │ KW_ELSE             │ else           │    29 │     8
+104  │ SYM_LBRACE ({)      │ {              │    29 │    12
+105  │ IDENTIFICADOR       │ printf         │    30 │    10
+106  │ SYM_LPAREN ())      │ (              │    30 │    15
+107  │ STRING              │ "x é igual a y\n │    30 │    16
+108  │ SYM_RPAREN ())      │ )              │    30 │    34
+109  │ SYM_SEMICOLON (;)   │ ;              │    30 │    35
+110  │ SYM_RBRACE (})      │ }              │    31 │     6
+111  │ KW_WHILE            │ while          │    34 │     6
+112  │ SYM_LPAREN ())      │ (              │    34 │    11
+113  │ IDENTIFICADOR       │ x              │    34 │    12
+114  │ OP_LT (<)           │ <              │    34 │    13
+115  │ IDENTIFICADOR       │ y              │    34 │    14
+116  │ SYM_RPAREN ())      │ )              │    34 │    14
+117  │ SYM_LBRACE ({)      │ {              │    34 │    16
+118  │ IDENTIFICADOR       │ x              │    35 │    10
+119  │ OP_ASSIGN (=)       │ =              │    35 │    11
+120  │ IDENTIFICADOR       │ x              │    35 │    12
+121  │ OP_PLUS (+)         │ +              │    35 │    13
+122  │ NUM_INT             │ 1              │    35 │    14
+123  │ SYM_SEMICOLON (;)   │ ;              │    35 │    14
+124  │ SYM_RBRACE (})      │ }              │    36 │     6
+125  │ KW_FOR              │ for            │    39 │     6
+126  │ SYM_LPAREN ())      │ (              │    39 │     9
+127  │ KW_INT              │ int            │    39 │    10
+128  │ IDENTIFICADOR       │ i              │    39 │    13
+129  │ OP_ASSIGN (=)       │ =              │    39 │    14
+130  │ NUM_INT             │ 0              │    39 │    15
+131  │ SYM_SEMICOLON (;)   │ ;              │    39 │    15
+132  │ IDENTIFICADOR       │ i              │    39 │    17
+133  │ OP_LT (<)           │ <              │    39 │    18
+134  │ NUM_INT             │ 10             │    39 │    19
+135  │ SYM_SEMICOLON (;)   │ ;              │    39 │    20
+136  │ IDENTIFICADOR       │ i              │    39 │    22
+137  │ OP_INC (++)         │ ++             │    39 │    22
+138  │ SYM_RPAREN ())      │ )              │    39 │    24
+139  │ SYM_LBRACE ({)      │ {              │    39 │    26
+140  │ IDENTIFICADOR       │ printf         │    40 │    10
+141  │ SYM_LPAREN ())      │ (              │    40 │    15
+142  │ STRING              │ "Número: %d\n │    40 │    16
+143  │ SYM_COMMA (,)       │ ,              │    40 │    31
+144  │ IDENTIFICADOR       │ i              │    40 │    33
+145  │ SYM_RPAREN ())      │ )              │    40 │    33
+146  │ SYM_SEMICOLON (;)   │ ;              │    40 │    34
+147  │ SYM_RBRACE (})      │ }              │    41 │     6
+148  │ KW_INT              │ int            │    44 │     6
+149  │ IDENTIFICADOR       │ a              │    44 │     9
+150  │ OP_ASSIGN (=)       │ =              │    44 │    10
+151  │ NUM_INT             │ 5              │    44 │    11
+152  │ SYM_COMMA (,)       │ ,              │    44 │    11
+153  │ IDENTIFICADOR       │ b              │    44 │    13
+154  │ OP_ASSIGN (=)       │ =              │    44 │    14
+155  │ NUM_INT             │ 3              │    44 │    15
+156  │ SYM_SEMICOLON (;)   │ ;              │    44 │    15
+157  │ KW_INT              │ int            │    45 │     6
+158  │ IDENTIFICADOR       │ soma           │    45 │     9
+159  │ OP_ASSIGN (=)       │ =              │    45 │    13
+160  │ IDENTIFICADOR       │ a              │    45 │    14
+161  │ OP_PLUS (+)         │ +              │    45 │    15
+162  │ IDENTIFICADOR       │ b              │    45 │    16
+163  │ SYM_SEMICOLON (;)   │ ;              │    45 │    16
+164  │ KW_INT              │ int            │    46 │     6
+165  │ IDENTIFICADOR       │ diferenca      │    46 │     9
+166  │ OP_ASSIGN (=)       │ =              │    46 │    18
+167  │ IDENTIFICADOR       │ a              │    46 │    19
+168  │ OP_MINUS (-)        │ -              │    46 │    20
+169  │ IDENTIFICADOR       │ b              │    46 │    21
+170  │ SYM_SEMICOLON (;)   │ ;              │    46 │    21
+171  │ KW_INT              │ int            │    47 │     6
+172  │ IDENTIFICADOR       │ produto        │    47 │     9
+173  │ OP_ASSIGN (=)       │ =              │    47 │    16
+174  │ IDENTIFICADOR       │ a              │    47 │    17
+175  │ OP_MULT (*)         │ *              │    47 │    18
+176  │ IDENTIFICADOR       │ b              │    47 │    19
+177  │ SYM_SEMICOLON (;)   │ ;              │    47 │    19
+178  │ KW_INT              │ int            │    48 │     6
+179  │ IDENTIFICADOR       │ divisao        │    48 │     9
+180  │ OP_ASSIGN (=)       │ =              │    48 │    16
+181  │ IDENTIFICADOR       │ a              │    48 │    17
+182  │ OP_DIV (/)          │ /              │    48 │    18
+183  │ IDENTIFICADOR       │ b              │    48 │    18
+184  │ SYM_SEMICOLON (;)   │ ;              │    48 │    18
+185  │ KW_INT              │ int            │    49 │     6
+186  │ IDENTIFICADOR       │ modulo         │    49 │     9
+187  │ OP_ASSIGN (=)       │ =              │    49 │    15
+188  │ IDENTIFICADOR       │ a              │    49 │    16
+189  │ OP_MOD (%)          │ %              │    49 │    17
+190  │ IDENTIFICADOR       │ b              │    49 │    18
+191  │ SYM_SEMICOLON (;)   │ ;              │    49 │    18
+192  │ KW_INT              │ int            │    52 │     6
+193  │ IDENTIFICADOR       │ teste1         │    52 │     9
+194  │ OP_ASSIGN (=)       │ =              │    52 │    15
+195  │ SYM_LPAREN ())      │ (              │    52 │    16
+196  │ IDENTIFICADOR       │ a              │    52 │    17
+197  │ OP_EQ (==)          │ ==             │    52 │    18
+198  │ IDENTIFICADOR       │ b              │    52 │    21
+199  │ SYM_RPAREN ())      │ )              │    52 │    21
+200  │ SYM_SEMICOLON (;)   │ ;              │    52 │    22
+201  │ KW_INT              │ int            │    53 │     6
+202  │ IDENTIFICADOR       │ teste2         │    53 │     9
+203  │ OP_ASSIGN (=)       │ =              │    53 │    15
+204  │ SYM_LPAREN ())      │ (              │    53 │    16
+205  │ IDENTIFICADOR       │ a              │    53 │    17
+206  │ OP_NE (!=)          │ !=             │    53 │    18
+207  │ IDENTIFICADOR       │ b              │    53 │    21
+208  │ SYM_RPAREN ())      │ )              │    53 │    21
+209  │ SYM_SEMICOLON (;)   │ ;              │    53 │    22
+210  │ KW_INT              │ int            │    54 │     6
+211  │ IDENTIFICADOR       │ teste3         │    54 │     9
+212  │ OP_ASSIGN (=)       │ =              │    54 │    15
+213  │ SYM_LPAREN ())      │ (              │    54 │    16
+214  │ IDENTIFICADOR       │ a              │    54 │    17
+215  │ OP_GT (>)           │ >              │    54 │    18
+216  │ IDENTIFICADOR       │ b              │    54 │    19
+217  │ SYM_RPAREN ())      │ )              │    54 │    19
+218  │ SYM_SEMICOLON (;)   │ ;              │    54 │    20
+219  │ KW_INT              │ int            │    55 │     6
+220  │ IDENTIFICADOR       │ teste4         │    55 │     9
+221  │ OP_ASSIGN (=)       │ =              │    55 │    15
+222  │ SYM_LPAREN ())      │ (              │    55 │    16
+223  │ IDENTIFICADOR       │ a              │    55 │    17
+224  │ OP_GE (>=)          │ >=             │    55 │    18
+225  │ IDENTIFICADOR       │ b              │    55 │    21
+226  │ SYM_RPAREN ())      │ )              │    55 │    21
+227  │ SYM_SEMICOLON (;)   │ ;              │    55 │    22
+228  │ KW_INT              │ int            │    56 │     6
+229  │ IDENTIFICADOR       │ teste5         │    56 │     9
+230  │ OP_ASSIGN (=)       │ =              │    56 │    15
+231  │ SYM_LPAREN ())      │ (              │    56 │    16
+232  │ IDENTIFICADOR       │ a              │    56 │    17
+233  │ OP_LT (<)           │ <              │    56 │    18
+234  │ IDENTIFICADOR       │ b              │    56 │    19
+235  │ SYM_RPAREN ())      │ )              │    56 │    19
+236  │ SYM_SEMICOLON (;)   │ ;              │    56 │    20
+237  │ KW_INT              │ int            │    57 │     6
+238  │ IDENTIFICADOR       │ teste6         │    57 │     9
+239  │ OP_ASSIGN (=)       │ =              │    57 │    15
+240  │ SYM_LPAREN ())      │ (              │    57 │    16
+241  │ IDENTIFICADOR       │ a              │    57 │    17
+242  │ OP_LE (<=)          │ <=             │    57 │    18
+243  │ IDENTIFICADOR       │ b              │    57 │    21
+244  │ SYM_RPAREN ())      │ )              │    57 │    21
+245  │ SYM_SEMICOLON (;)   │ ;              │    57 │    22
+246  │ KW_INT              │ int            │    60 │     6
+247  │ IDENTIFICADOR       │ teste_and      │    60 │     9
+248  │ OP_ASSIGN (=)       │ =              │    60 │    18
+249  │ SYM_LPAREN ())      │ (              │    60 │    19
+250  │ IDENTIFICADOR       │ x              │    60 │    20
+251  │ OP_GT (>)           │ >              │    60 │    21
+252  │ NUM_INT             │ 0              │    60 │    22
+253  │ OP_AND (&&)         │ &&             │    60 │    23
+254  │ IDENTIFICADOR       │ y              │    60 │    26
+255  │ OP_GT (>)           │ >              │    60 │    27
+256  │ NUM_INT             │ 0              │    60 │    28
+257  │ SYM_RPAREN ())      │ )              │    60 │    28
+258  │ SYM_SEMICOLON (;)   │ ;              │    60 │    29
+259  │ KW_INT              │ int            │    61 │     6
+260  │ IDENTIFICADOR       │ teste_or       │    61 │     9
+261  │ OP_ASSIGN (=)       │ =              │    61 │    17
+262  │ SYM_LPAREN ())      │ (              │    61 │    18
+263  │ IDENTIFICADOR       │ x              │    61 │    19
+264  │ OP_LT (<)           │ <              │    61 │    20
+265  │ NUM_INT             │ 0              │    61 │    21
+266  │ OP_OR (||)          │ ||             │    61 │    22
+267  │ IDENTIFICADOR       │ y              │    61 │    25
+268  │ OP_LT (<)           │ <              │    61 │    26
+269  │ NUM_INT             │ 0              │    61 │    27
+270  │ SYM_RPAREN ())      │ )              │    61 │    27
+271  │ SYM_SEMICOLON (;)   │ ;              │    61 │    28
+272  │ KW_INT              │ int            │    62 │     6
+273  │ IDENTIFICADOR       │ teste_not      │    62 │     9
+274  │ OP_ASSIGN (=)       │ =              │    62 │    18
+275  │ OP_NOT (!)          │ !              │    62 │    19
+276  │ SYM_LPAREN ())      │ (              │    62 │    19
+277  │ IDENTIFICADOR       │ x              │    62 │    20
+278  │ OP_EQ (==)          │ ==             │    62 │    21
+279  │ NUM_INT             │ 0              │    62 │    24
+280  │ SYM_RPAREN ())      │ )              │    62 │    24
+281  │ SYM_SEMICOLON (;)   │ ;              │    62 │    25
+282  │ KW_INT              │ int            │    65 │     6
+283  │ IDENTIFICADOR       │ bit_and        │    65 │     9
+284  │ OP_ASSIGN (=)       │ =              │    65 │    16
+285  │ IDENTIFICADOR       │ a              │    65 │    17
+286  │ OP_BITAND (&)       │ &              │    65 │    18
+287  │ IDENTIFICADOR       │ b              │    65 │    19
+288  │ SYM_SEMICOLON (;)   │ ;              │    65 │    19
+289  │ KW_INT              │ int            │    66 │     6
+290  │ IDENTIFICADOR       │ bit_or         │    66 │     9
+291  │ OP_ASSIGN (=)       │ =              │    66 │    15
+292  │ IDENTIFICADOR       │ a              │    66 │    16
+293  │ OP_BITOR (|)        │ |              │    66 │    17
+294  │ IDENTIFICADOR       │ b              │    66 │    18
+295  │ SYM_SEMICOLON (;)   │ ;              │    66 │    18
+296  │ KW_INT              │ int            │    67 │     6
+297  │ IDENTIFICADOR       │ bit_xor        │    67 │     9
+298  │ OP_ASSIGN (=)       │ =              │    67 │    16
+299  │ IDENTIFICADOR       │ a              │    67 │    17
+300  │ OP_BITXOR (^)       │ ^              │    67 │    18
+301  │ IDENTIFICADOR       │ b              │    67 │    19
+302  │ SYM_SEMICOLON (;)   │ ;              │    67 │    19
+303  │ KW_INT              │ int            │    68 │     6
+304  │ IDENTIFICADOR       │ bit_not        │    68 │     9
+305  │ OP_ASSIGN (=)       │ =              │    68 │    16
+306  │ OP_BITNOT (~)       │ ~              │    68 │    17
+307  │ IDENTIFICADOR       │ a              │    68 │    17
+308  │ SYM_SEMICOLON (;)   │ ;              │    68 │    17
+309  │ KW_INT              │ int            │    69 │     6
+310  │ IDENTIFICADOR       │ shift_left     │    69 │     9
+311  │ OP_ASSIGN (=)       │ =              │    69 │    19
+312  │ IDENTIFICADOR       │ a              │    69 │    20
+313  │ OP_LSHIFT (<<)      │ <<             │    69 │    21
+314  │ NUM_INT             │ 2              │    69 │    24
+315  │ SYM_SEMICOLON (;)   │ ;              │    69 │    24
+316  │ KW_INT              │ int            │    70 │     6
+317  │ IDENTIFICADOR       │ shift_right    │    70 │     9
+318  │ OP_ASSIGN (=)       │ =              │    70 │    20
+319  │ IDENTIFICADOR       │ b              │    70 │    21
+320  │ OP_RSHIFT (>>)      │ >>             │    70 │    22
+321  │ NUM_INT             │ 1              │    70 │    25
+322  │ SYM_SEMICOLON (;)   │ ;              │    70 │    25
+323  │ IDENTIFICADOR       │ x              │    73 │     6
+324  │ OP_INC (++)         │ ++             │    73 │     6
+325  │ SYM_SEMICOLON (;)   │ ;              │    73 │     8
+326  │ IDENTIFICADOR       │ y              │    74 │     6
+327  │ OP_DEC (--)         │ --             │    74 │     6
+328  │ SYM_SEMICOLON (;)   │ ;              │    74 │     8
+329  │ OP_INC (++)         │ ++             │    75 │     6
+330  │ IDENTIFICADOR       │ x              │    75 │     8
+331  │ SYM_SEMICOLON (;)   │ ;              │    75 │     8
+332  │ OP_DEC (--)         │ --             │    76 │     6
+333  │ IDENTIFICADOR       │ y              │    76 │     8
+334  │ SYM_SEMICOLON (;)   │ ;              │    76 │     8
+335  │ IDENTIFICADOR       │ soma           │    79 │     6
+336  │ OP_PLUS_ASSIGN (+=) │ +=             │    79 │    10
+337  │ NUM_INT             │ 5              │    79 │    13
+338  │ SYM_SEMICOLON (;)   │ ;              │    79 │    13
+339  │ IDENTIFICADOR       │ diferenca      │    80 │     6
+340  │ OP_MINUS_ASSIGN (-=) │ -=             │    80 │    15
+341  │ NUM_INT             │ 3              │    80 │    18
+342  │ SYM_SEMICOLON (;)   │ ;              │    80 │    18
+343  │ IDENTIFICADOR       │ produto        │    81 │     6
+344  │ OP_MULT_ASSIGN (*=) │ *=             │    81 │    13
+345  │ NUM_INT             │ 2              │    81 │    16
+346  │ SYM_SEMICOLON (;)   │ ;              │    81 │    16
+347  │ IDENTIFICADOR       │ divisao        │    82 │     6
+348  │ OP_DIV_ASSIGN (/=)  │ /=             │    82 │    13
+349  │ NUM_INT             │ 2              │    82 │    15
+350  │ SYM_SEMICOLON (;)   │ ;              │    82 │    15
+351  │ KW_STRUCT           │ struct         │    85 │     6
+352  │ IDENTIFICADOR       │ Pessoa         │    85 │    12
+353  │ SYM_LBRACE ({)      │ {              │    85 │    18
+354  │ KW_CHAR             │ char           │    86 │    10
+355  │ IDENTIFICADOR       │ nome           │    86 │    14
+356  │ SYM_LBRACKET ([)    │ [              │    86 │    17
+357  │ NUM_INT             │ 50             │    86 │    18
+358  │ SYM_RBRACKET (])    │ ]              │    86 │    19
+359  │ SYM_SEMICOLON (;)   │ ;              │    86 │    20
+360  │ KW_INT              │ int            │    87 │    10
+361  │ IDENTIFICADOR       │ idade          │    87 │    13
+362  │ SYM_SEMICOLON (;)   │ ;              │    87 │    17
+363  │ KW_FLOAT            │ float          │    88 │    10
+364  │ IDENTIFICADOR       │ altura         │    88 │    15
+365  │ SYM_SEMICOLON (;)   │ ;              │    88 │    20
+366  │ SYM_RBRACE (})      │ }              │    89 │     6
+367  │ SYM_SEMICOLON (;)   │ ;              │    89 │     7
+368  │ KW_TYPEDEF          │ typedef        │    92 │     6
+369  │ KW_STRUCT           │ struct         │    92 │    13
+370  │ IDENTIFICADOR       │ Pessoa         │    92 │    19
+371  │ IDENTIFICADOR       │ Pessoa         │    92 │    25
+372  │ SYM_SEMICOLON (;)   │ ;              │    92 │    30
+373  │ KW_INT              │ int            │    95 │     6
+374  │ IDENTIFICADOR       │ opcao          │    95 │     9
+375  │ OP_ASSIGN (=)       │ =              │    95 │    14
+376  │ NUM_INT             │ 2              │    95 │    15
+377  │ SYM_SEMICOLON (;)   │ ;              │    95 │    15
+378  │ KW_SWITCH           │ switch         │    96 │     6
+379  │ SYM_LPAREN ())      │ (              │    96 │    12
+380  │ IDENTIFICADOR       │ opcao          │    96 │    13
+381  │ SYM_RPAREN ())      │ )              │    96 │    17
+382  │ SYM_LBRACE ({)      │ {              │    96 │    19
+383  │ KW_CASE             │ case           │    97 │    10
+384  │ NUM_INT             │ 1              │    97 │    14
+385  │ SYM_COLON (:)       │ :              │    97 │    14
+386  │ IDENTIFICADOR       │ printf         │    98 │    14
+387  │ SYM_LPAREN ())      │ (              │    98 │    19
+388  │ STRING              │ "Opção 1\n   │    98 │    20
+389  │ SYM_RPAREN ())      │ )              │    98 │    33
+390  │ SYM_SEMICOLON (;)   │ ;              │    98 │    34
+391  │ KW_BREAK            │ break          │    99 │    14
+392  │ SYM_SEMICOLON (;)   │ ;              │    99 │    18
+393  │ KW_CASE             │ case           │   100 │    10
+394  │ NUM_INT             │ 2              │   100 │    14
+395  │ SYM_COLON (:)       │ :              │   100 │    14
+396  │ IDENTIFICADOR       │ printf         │   101 │    14
+397  │ SYM_LPAREN ())      │ (              │   101 │    19
+398  │ STRING              │ "Opção 2\n   │   101 │    20
+399  │ SYM_RPAREN ())      │ )              │   101 │    33
+400  │ SYM_SEMICOLON (;)   │ ;              │   101 │    34
+401  │ KW_BREAK            │ break          │   102 │    14
+402  │ SYM_SEMICOLON (;)   │ ;              │   102 │    18
+403  │ KW_DEFAULT          │ default        │   103 │    10
+404  │ SYM_COLON (:)       │ :              │   103 │    16
+405  │ IDENTIFICADOR       │ printf         │   104 │    14
+406  │ SYM_LPAREN ())      │ (              │   104 │    19
+407  │ STRING              │ "Opção inválida\n │   104 │    20
+408  │ SYM_RPAREN ())      │ )              │   104 │    41
+409  │ SYM_SEMICOLON (;)   │ ;              │   104 │    42
+410  │ SYM_RBRACE (})      │ }              │   105 │     6
+411  │ KW_DO               │ do             │   108 │     6
+412  │ SYM_LBRACE ({)      │ {              │   108 │     8
+413  │ IDENTIFICADOR       │ x              │   109 │    10
+414  │ OP_DEC (--)         │ --             │   109 │    10
+415  │ SYM_SEMICOLON (;)   │ ;              │   109 │    12
+416  │ SYM_RBRACE (})      │ }              │   110 │     6
+417  │ KW_WHILE            │ while          │   110 │     8
+418  │ SYM_LPAREN ())      │ (              │   110 │    13
+419  │ IDENTIFICADOR       │ x              │   110 │    14
+420  │ OP_GT (>)           │ >              │   110 │    15
+421  │ NUM_INT             │ 0              │   110 │    16
+422  │ SYM_RPAREN ())      │ )              │   110 │    16
+423  │ SYM_SEMICOLON (;)   │ ;              │   110 │    17
+424  │ KW_FOR              │ for            │   113 │     6
+425  │ SYM_LPAREN ())      │ (              │   113 │     9
+426  │ KW_INT              │ int            │   113 │    10
+427  │ IDENTIFICADOR       │ j              │   113 │    13
+428  │ OP_ASSIGN (=)       │ =              │   113 │    14
+429  │ NUM_INT             │ 0              │   113 │    15
+430  │ SYM_SEMICOLON (;)   │ ;              │   113 │    15
+431  │ IDENTIFICADOR       │ j              │   113 │    17
+432  │ OP_LT (<)           │ <              │   113 │    18
+433  │ NUM_INT             │ 20             │   113 │    19
+434  │ SYM_SEMICOLON (;)   │ ;              │   113 │    20
+435  │ IDENTIFICADOR       │ j              │   113 │    22
+436  │ OP_INC (++)         │ ++             │   113 │    22
+437  │ SYM_RPAREN ())      │ )              │   113 │    24
+438  │ SYM_LBRACE ({)      │ {              │   113 │    26
+439  │ KW_IF               │ if             │   114 │    10
+440  │ SYM_LPAREN ())      │ (              │   114 │    12
+441  │ IDENTIFICADOR       │ j              │   114 │    13
+442  │ OP_EQ (==)          │ ==             │   114 │    14
+443  │ NUM_INT             │ 5              │   114 │    17
+444  │ SYM_RPAREN ())      │ )              │   114 │    17
+445  │ KW_CONTINUE         │ continue       │   115 │    14
+446  │ SYM_SEMICOLON (;)   │ ;              │   115 │    21
+447  │ KW_IF               │ if             │   116 │    10
+448  │ SYM_LPAREN ())      │ (              │   116 │    12
+449  │ IDENTIFICADOR       │ j              │   116 │    13
+450  │ OP_EQ (==)          │ ==             │   116 │    14
+451  │ NUM_INT             │ 15             │   116 │    17
+452  │ SYM_RPAREN ())      │ )              │   116 │    18
+453  │ KW_BREAK            │ break          │   117 │    14
+454  │ SYM_SEMICOLON (;)   │ ;              │   117 │    18
+455  │ SYM_RBRACE (})      │ }              │   118 │     6
+456  │ KW_INT              │ int            │   121 │     6
+457  │ IDENTIFICADOR       │ tamanho        │   121 │     9
+458  │ OP_ASSIGN (=)       │ =              │   121 │    16
+459  │ KW_SIZEOF           │ sizeof         │   121 │    17
+460  │ SYM_LPAREN ())      │ (              │   121 │    22
+461  │ KW_INT              │ int            │   121 │    23
+462  │ SYM_RPAREN ())      │ )              │   121 │    25
+463  │ SYM_SEMICOLON (;)   │ ;              │   121 │    26
+464  │ KW_INT              │ int            │   124 │     6
+465  │ OP_MULT (*)         │ *              │   124 │     9
+466  │ IDENTIFICADOR       │ ptr            │   124 │     9
+467  │ OP_ASSIGN (=)       │ =              │   124 │    12
+468  │ OP_BITAND (&)       │ &              │   124 │    13
+469  │ IDENTIFICADOR       │ a              │   124 │    13
+470  │ SYM_SEMICOLON (;)   │ ;              │   124 │    13
+471  │ KW_INT              │ int            │   125 │     6
+472  │ IDENTIFICADOR       │ valor_ptr      │   125 │     9
+473  │ OP_ASSIGN (=)       │ =              │   125 │    18
+474  │ OP_MULT (*)         │ *              │   125 │    19
+475  │ IDENTIFICADOR       │ ptr            │   125 │    19
+476  │ SYM_SEMICOLON (;)   │ ;              │   125 │    21
+477  │ KW_RETURN           │ return         │   134 │     6
+478  │ NUM_INT             │ 0              │   134 │    12
+479  │ SYM_SEMICOLON (;)   │ ;              │   134 │    12
+480  │ SYM_RBRACE (})      │ }              │   135 │     2
+
+═══════════════════════════════════════════════════════════════
+FIM DO RELATÓRIO
+═══════════════════════════════════════════════════════════════
