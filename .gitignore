@@ -1,4 +1,11 @@
-# Arquivos compilados e binários
+# ============================================================================
+# GITIGNORE - ANALISADOR LEXICO
+# Apenas código-fonte essencial e manuais principais
+# ============================================================================
+
+# ============================================================================
+# COMPILADOS E BINARIOS (SEMPRE IGNORAR)
+# ============================================================================
 *.o
 *.obj
 *.exe
@@ -8,86 +15,139 @@
 *.dylib
 *.dll
 *.lib
+*.su
 
-# Executáveis
 analisador_lexico
 analisador_lexico.exe
 parser
+parser.exe
 
-# Artefatos de build
+# ============================================================================
+# ARTEFATOS DE BUILD (SEMPRE IGNORAR)
+# ============================================================================
 build/
 dist/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile.local
 *.dSYM/
-*.su
 
-# Arquivos de saída
-*.txt
+# ============================================================================
+# SAIDAS E LOGS (SEMPRE IGNORAR)
+# ============================================================================
 tabela_simbolos.txt
 saida_*.txt
-
-# Cache e temporários
+*.log
+debug.log
 *.tmp
 *.bak
+
+# ============================================================================
+# CACHE E TEMPORARIOS (SEMPRE IGNORAR)
+# ============================================================================
 *.swp
 *.swo
 *~
 .DS_Store
 Thumbs.db
-
-# IDE e editores
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.project
-.cproject
-.settings/
-
-# Ferramentas de build
-CMakeCache.txt
-CMakeFiles/
-cmake_install.cmake
-Makefile.local
-
-# Dependências
-node_modules/
+Desktop.ini
 *.pyc
 __pycache__/
 
-# Logs
-*.log
-debug.log
+# ============================================================================
+# IDE E EDITORES (SEMPRE IGNORAR)
+# ============================================================================
+.vscode/
+.idea/
+.project
+.cproject
+.settings/
+*.swp
+*.code-workspace
 
-# Testes gerados
+# ============================================================================
+# DEPENDENCIAS (SEMPRE IGNORAR)
+# ============================================================================
+node_modules/
+*.lock
+package-lock.json
+
+# ============================================================================
+# TESTES GERADOS (SEMPRE IGNORAR)
+# ============================================================================
 test_output/
 *.gcda
 *.gcno
 coverage/
 
-# Imagens e mídia (screenshots pessoais)
+# ============================================================================
+# MIDIA (SEMPRE IGNORAR)
+# ============================================================================
 *.jpeg
 *.jpg
 *.png
 *.gif
 *.bmp
+*.mp4
+*.avi
 
-# Arquivos do SO
-.DS_Store
-Thumbs.db
-Desktop.ini
+# ============================================================================
+# SCRIPTS DE VALIDACAO (IGNORAR - recriar conforme necessario)
+# ============================================================================
+validacao_enunciado.sh
+validacao_completa.sh
+validacao_*.sh
+test_*.sh
 
-# Git
-.git/
-.gitmodules
-
-# Documentação gerada automaticamente (manter apenas essencial)
-# mp.md e mu.md são importantes - manter!
-# Outros .md redundantes:
+# ============================================================================
+# DOCUMENTACAO REDUNDANTE (IGNORAR - manter apenas essencial)
+# ============================================================================
+# MANTER: README.md, mu.md, mp.md, CompiladorAutomatos.jff
+# IGNORAR: Resto de documentacao gerada automaticamente
+# ============================================================================
 ARQUITETURA_COMPILADOR.md
 AS_7_FASES_COMPILACAO.md
 GUIA_COMPLETO_COMPILADOR.md
 PLANO_COMPILADOR_COMPLETO.md
 RESUMO_VISUAL.md
-validacao_enunciado.sh
-validacao_completa.sh
+ANALISE_AUTOMATO.md
+REORGANIZACAO_ESTADOS.md
+DIAGRAMA_TRANSICOES.md
+GUIA_PRATICO_CORRECOES.md
+ESTRUTURA_OTIMIZADA.md
+INDICE.md
+ESTRUCTURA.md
+docs/RELATORIO_*.md
+mp.backup.md
+mu.backup.md
+
+# ============================================================================
+# ARQUIVO DE TESTE ALTERNATIVO (IGNORAR)
+# ============================================================================
+teste_*.c
+entrada_*.c
+exemplo_*.c
+teste_preprocessor.c
+
+# ============================================================================
+# GIT INTERNALS
+# ============================================================================
+.git/
+.gitmodules
+
+# ============================================================================
+# ARQUIVOS VERSIONADOS ESSENCIAIS (COMMIT)
+# ============================================================================
+# NÃO IGNORE (Apenas para referência):
+# ✓ main.c                    - Programa principal
+# ✓ Makefile                  - Build system
+# ✓ README.md                 - Overview do projeto
+# ✓ mu.md                     - Manual do Usuário
+# ✓ mp.md                     - Manual do Programador
+# ✓ CompiladorAutomatos.jff   - Autômato JFLAP
+# ✓ src/lexer/*.c/h           - Código-fonte do lexer
+# ✓ utils/printer.c/h         - Funções auxiliares
+# ✓ .gitignore                - Este arquivo
+# ✓ teste_entrada.c           - Teste padrão
+# ============================================================================
