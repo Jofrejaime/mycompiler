@@ -1,0 +1,85 @@
+INSTITUTO SUPERIOR POLITÉCNICO DE TECNOLOGIAS E CIÊNCIAS
+
+TRABALHO PRÁTICO DE COMPILADORES
+CONSTRUÇÃO DO MINI - COMPILADOR
+
+⸻
+
+DISCIPLINA: Compiladores - M3
+CURSO
+NOME ALUNO: Jofre Jaime Fernando Muite
+DATA: 24 - 03 - 2026
+DATA DEFESA: 16 - 04 - 2026
+TURNO
+NOME PROFESSOR: André Filemon
+
+⸻
+
+Trabalho sobre Análise Léxica (Analisador Léxico): (primeira fase de uma compilador)
+
+ENUNCIADO
+
+O objectivo do trabalho é construir um analisador léxico para uma linguagem de programação de alto nível. (Subconjunto da sua linguagem de estudo).
+
+O programa deve ler um programa-fonte de um subconjunto da sua linguagem de estudo e gravar todos os token e lexema encontrados em uma tabela de símbolos.
+
+O programa (Analisador Léxico) deve conter uma função (classe ou método) analex () que fará análise de todos os símbolos do programa-fonte lido pela função (classe ou método) ler_caractere (), depois de validar o lexema e token e gravar na tabela de símbolos.
+
+O analisador léxico deve ler um arquivo de entrada com os seguintes símbolos válidos da linguagem escolhida pelo grupo:
+	•	Letra: a,b,…z,A,B,…Z
+	•	Digito: 0,1…9
+	•	Símbolos Especiais: ( ) { } [ ] | | etc
+	•	Operador Relacionais: < | > | <= | >= | etc
+	•	Palavras Reservadas: while | if | etc
+	•	Pontuações: , | ; | : | . | etc
+	•	etc
+
+⸻
+
+Algumas funções (classe ou método) que os senhores deverão criar:
+	•	Analex (): função (classe ou método) que implementa os autômatos finitos determinísticos e faz a validação do lexema e token.
+	•	Ler caractere (): esta função (classe ou método) deve fazer a leitura caractere a caractere e entrega o caractere (símbolo) para a função (classe ou método) Analex () aonde o símbolo é analisado e validado.
+	•	Volta caractere (): esta função (classe ou método) será sempre usada quando for lido “outro” no diagrama de transição.
+	•	Gravar Token Lexema (): esta função (classe ou método) terá o papel de gravar ou guardar o token e lexema na tabela de símbolos.
+
+Página 1 de 2
+
+⸻
+
+TRABALHO PRÁTICO DE COMPILADORES
+CONSTRUÇÃO DO MINI - COMPILADOR
+
+⸻
+
+Dica:
+	•	Criar os tokens como constantes (#define) para os estudantes que forem implementar em C (no java podemos utilizar final)
+
+⸻
+
+O que deverá ser entregue:
+	•	Um manual do usuário (duas a cinco páginas) em um arquivo chamado mu.doc, contendo uma explicação de como se utiliza o seu Analisador Léxico (explicar o formato de entrada e saída do programa).
+	•	Um manual do programador (cinco a dez páginas) em um arquivo chamado mp.doc, contendo a lista completa dos tokens utilizados, o autômato finito determinístico, expressões regulares e o pseudo-código de cada função (classe ou método).
+	•	É obrigatório o uso de conceito de máquina de estado na implementação da Léxico.
+
+⸻
+
+Observações:
+	•	Cópias serão anuladas
+	•	As linguagens aceitas para a implementação são: C, C++, JAVA, C# entre outras linguagens;
+	•	É proibido o uso da linguagem Python tanto para linguagem de estudo como linguagem de implementação;
+	•	Só é permitido trabalhar com linguagens compiladas;
+	•	Entrega atrasada implica em 2% de desconto do valor total da nota por dia útil de atraso;
+	•	A entrega consiste de defesa (apresentação) na data previamente marcada em horário de aula e entregue os manuais (usuário e programador)
+
+⸻
+
+Datas:
+	•	Envio do autômato Finito Determinístico até dia 14/04/2026 testado na ferramenta JFLAP até as 23:50 (enviar também todas as expressões regulares);
+	•	Envio o Analisador Léxico até 14/04/2026 até as 23:50;
+	•	Defesa no dia 16/04/2023;
+
+⸻
+
+Correio eletrônico: compiladores2023@gmail.com
+
+Bom trabalho
