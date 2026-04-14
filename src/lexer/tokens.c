@@ -201,35 +201,33 @@ const char* tipo_token_para_string(int tipo) {
    ============================================================================ */
 void imprimir_tabla_simbolos(tabla_simbolos_t *ts) {
     if (ts == NULL || ts->quantidade == 0) {
-        printf("Tabela de símbolos vazia\n");
+        printf("Tabela de simbolos vazia\n");
         return;
     }
     
     printf("\n");
-    printf("╔════════════════════════════════════════════════════════════════════════╗\n");
-    printf("║                    TABELA DE SÍMBOLOS (TOKENS)                        ║\n");
-    printf("╠════════════════════════════════════════════════════════════════════════╣\n");
-    printf("║ Nº  │ Tipo                    │ Lexema         │ Linha │ Coluna │ Valor│\n");
-    printf("╟─────┼─────────────────────────┼────────────────┼───────┼────────┼───────╢\n");
+    printf("+--------+-------------------------+----------------+-------+--------+-------+\n");
+    printf("| No     | Tipo                    | Lexema         | Linha | Coluna | Valor |\n");
+    printf("+--------+-------------------------+----------------+-------+--------+-------+\n");
     
     for (int i = 0; i < ts->quantidade; i++) {
         token_t *t = &ts->tokens[i];
         const char *tipo_str = tipo_token_para_string(t->tipo);
         
-        printf("│ %3d │ %-23s │ %-14s │ %5d │ %6d │",
+        printf("| %6d | %-23s | %-14s | %5d | %6d |",
                i + 1, tipo_str, t->lexeme, t->linha, t->coluna);
         
         /* Exibir valor para números */
         if (t->tipo == TK_NUM_INT) {
-            printf(" %5d│\n", t->valor.valor_int);
+            printf(" %5d |\n", t->valor.valor_int);
         } else if (t->tipo == TK_NUM_FLOAT || t->tipo == TK_NUM_EXP) {
-            printf(" %.2f│\n", t->valor.valor_float);
+            printf(" %.2f |\n", t->valor.valor_float);
         } else {
-            printf("      │\n");
+            printf("       |\n");
         }
     }
     
-    printf("╠════════════════════════════════════════════════════════════════════════╣\n");
-    printf("║ TOTAL DE TOKENS: %-55d │\n", ts->quantidade);
-    printf("╚════════════════════════════════════════════════════════════════════════╝\n");
+    printf("+--------+-------------------------+----------------+-------+--------+-------+\n");
+    printf("| TOTAL DE TOKENS: %-62d |\n", ts->quantidade);
+    printf("+--------+-------------------------+----------------+-------+--------+-------+\n");
 }

@@ -28,8 +28,9 @@ SOURCES = main.c \
           src/lexer/lexer_token.c \
           src/lexer/lexer_init.c \
           src/lexer/tokens.c \
-          src/lexer/keywords.c
-HEADERS = src/lexer/lexer.h src/lexer/tokens.h src/lexer/keywords.h
+          src/lexer/keywords.c \
+          utils/printer.c
+HEADERS = src/lexer/lexer.h src/lexer/tokens.h src/lexer/keywords.h utils/printer.h
 
 # Arquivos-objeto
 OBJECTS = $(SOURCES:.c=.o)
@@ -45,12 +46,12 @@ TESTE_SAIDA = tabela_simbolos.txt
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	@echo "🔗 Linkando $(TARGET)..."
+	@echo "Linkando $(TARGET)..."
 	$(CC) $(CFLAGS) $(RELEASE_FLAGS) -o $(TARGET) $(OBJECTS)
-	@echo "✓ Executável criado: $(TARGET)"
+	@echo "OK: Executavel criado: $(TARGET)"
 
 %.o: %.c $(HEADERS)
-	@echo "📝 Compilando $<..."
+	@echo "Compilando $<..."
 	$(CC) $(CFLAGS) $(RELEASE_FLAGS) -c $< -o $@
 
 # ============================================================================
@@ -58,21 +59,21 @@ $(TARGET): $(OBJECTS)
 # ============================================================================
 
 clean:
-	@echo "🧹 Limpando arquivos compilados..."
+	@echo "Limpando arquivos compilados..."
 	rm -f $(OBJECTS) $(TARGET) $(TESTE_SAIDA)
-	@echo "✓ Limpeza concluída"
+	@echo "OK: Limpeza concluida"
 
 debug: CFLAGS += $(DEBUG_FLAGS)
 debug: clean $(TARGET)
-	@echo "✓ Build de debug concluído"
+	@echo "OK: Build de debug concluido"
 
 run: $(TARGET)
-	@echo "▶️  Executando analisador léxico com teste..."
-	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "Executando analisador lexico com teste..."
+	@echo "-------------------------------------------"
 	./$(TARGET) $(TESTE_ENTRADA)
-	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@echo "\n📄 Resultado salvo em: $(TESTE_SAIDA)"
-	@echo "📖 Conteúdo da tabela:"
+	@echo "-------------------------------------------"
+	@echo "\nResultado salvo em: $(TESTE_SAIDA)"
+	@echo "Conteudo da tabela:"
 	@cat $(TESTE_SAIDA)
 
 help:
