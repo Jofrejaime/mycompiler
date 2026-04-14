@@ -24,7 +24,7 @@ TARGET = analisador_lexico
 SOURCES = main.c \
           src/lexer/lexer.c \
           src/lexer/lexer_io.c \
-          src/lexer/lexer_patterns.c \
+          src/lexer/lexer_fsm.c \
           src/lexer/lexer_token.c \
           src/lexer/lexer_init.c \
           src/lexer/tokens.c \
