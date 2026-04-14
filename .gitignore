@@ -13,7 +13,6 @@
 analisador_lexico
 analisador_lexico.exe
 parser
-lexer
 
 # Artefatos de build
 build/
