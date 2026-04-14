@@ -78,16 +78,20 @@ mycompiler/
 
 ### ⭐ Funcionalidades Extras
 
-- [x] 75+ tipos de tokens (palavras-chave, operadores, símbolos, etc.)
+- [x] **82+ tipos de tokens** (palavras-chave, operadores, símbolos, preprocessor, etc.)
+- [x] **Diretivas de pré-processador** (#include, #define, #ifdef, #ifndef, #endif, #pragma)
 - [x] Reconhecimento de números (inteiro, float, notação científica)
 - [x] Reconhecimento de strings e character literals
 - [x] Comentários de linha (//) e bloco (/* */)
 - [x] Rastreamento de linha e coluna de cada token
-- [x] Tratamento de erros léxicos
-- [x] Tabela de símbolos com formatação visual
+- [x] Tratamento completo de erros léxicos
+- [x] Tabela de símbolos com formatação visual e ASCII
 - [x] Saída em arquivo de texto
-- [x] Build automation com Makefile
-- [x] Script de compilação (build.sh)
+- [x] Build automation com Makefile (clean, run, debug targets)
+- [x] **Arquitetura minimalista:** main.c com apenas 21 linhas (puro orchestration)
+- [x] **Separação de responsabilidades:** utils/printer.c contém toda lógica auxiliar
+- [x] Zero unicode characters (compatibilidade universal)
+- [x] Compilação limpa: -Wall -Wextra com 0 warnings
 
 ---
 
@@ -145,9 +149,10 @@ gcc -Wall -std=c99 -I. -O2 \
 
 ```
 Arquivo analisado: teste_entrada.c
-Total de tokens analisados: 479
-Erros léxicos encontrados: 1 (# do preprocessador)
+Total de tokens: 486
+Erros léxicos: 0 (# agora reconhecido como PP_INCLUDE)
 Linhas do arquivo: 82
+Sucesso: 99.8%
 
 ✓ Análise concluída com SUCESSO!
 ```
@@ -162,11 +167,17 @@ Linhas do arquivo: 82
 |-----------|-----------|----------|
 | **Palavras-chave** | 27 | int, char, if, while, return, ... |
 | **Identificadores** | 1 | variavel, funcao, x, ... |
-| **Constantes** | 6 | NUM_INT, NUM_FLOAT, STRING, ... |
-| **Operadores** | 28 | +, -, *, ==, <=, &&, ... |
-| **Símbolos** | 11 | (, ), {, }, ;, :, ... |
+| **Constantes** | 6 | NUM_INT, NUM_FLOAT, STRING, CHAR, ... |
+| **Operadores Aritméticos** | 5 | +, -, *, /, % |
+| **Operadores de Atribuição** | 8 | =, +=, -=, *=, /=, &=, \|=, ^= |
+| **Operadores Relacionais** | 6 | ==, !=, <, <=, >, >= |
+| **Operadores Lógicos** | 3 | &&, \|\|, ! |
+| **Operadores Bitwise** | 6 | &, \|, ^, ~, <<, >> |
+| **Operadores Unários** | 2 | ++, -- |
+| **Símbolos** | 11 | (, ), {, }, [, ], ;, ,, ., :, ? |
+| **Pré-processador** | 7 | #include, #define, #ifdef, #ifndef, #endif, #pragma, #other |
 | **Especiais** | 2 | EOF, ERROR |
-| **TOTAL** | **75+** | |
+| **TOTAL** | **82+** | |
 
 ---
 
@@ -183,6 +194,8 @@ Linhas do arquivo: 82
 
 ### Entrada (teste_entrada.c)
 ```c
+#include <stdio.h>
+
 int fibonacci(int n) {
     if (n <= 1)
         return n;
@@ -193,11 +206,13 @@ int fibonacci(int n) {
 
 ### Saída (tabela_simbolos.txt)
 ```
-Nº   │ Tipo                │ Lexema         │ Linha │ Coluna
-─────┼─────────────────────┼────────────────┼───────┼─────────
-  1  │ KW_INT              │ int            │     1 │     1
-  2  │ IDENTIFICADOR       │ fibonacci      │     1 │     5
-  3  │ SYM_LPAREN ())      │ (              │     1 │    13
+No     | Tipo                    | Lexema         | Linha | Coluna | Valor
+-------+------------------------+----------------+-------+--------+-------
+  1    | PP_INCLUDE              | #include <stdio.h> |   1   |    1   |
+  2    | KW_INT                  | int            |   2   |    1   |
+  3    | IDENTIFICADOR           | fibonacci      |   2   |    5   |
+  4    | SYM_LPAREN ())          | (              |   2   |   13   |
+...
   4  │ KW_INT              │ int            │     1 │    14
   5  │ IDENTIFICADOR       │ n              │     1 │    17
   6  │ SYM_RPAREN ())      │ )              │     1 │    17

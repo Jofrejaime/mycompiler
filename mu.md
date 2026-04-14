@@ -345,6 +345,23 @@ $ chmod 644 programa.c  # Dar permissão de leitura
 
 **R:** Parcialmente. Identificadores unicode não são suportados. Use apenas ASCII padrão.
 
+### P: Como são tratadas as diretivas de pré-processador? ⭐ NOVO
+
+**R:** Desde a v2.1, o analisador reconhece **tokens de pré-processador**:
+- `#include <stdio.h>` → `TK_PP_INCLUDE`
+- `#define MAX 100` → `TK_PP_DEFINE`
+- `#ifdef DEBUG` → `TK_PP_IFDEF`
+- `#ifndef RELEASE` → `TK_PP_IFNDEF`
+- `#endif` → `TK_PP_ENDIF`
+- `#pragma pack(1)` → `TK_PP_PRAGMA`
+- `#...` (outras) → `TK_PP_OTHER`
+
+**Funcionamento:** Um novo estado FSM (Q35) acumula caracteres da diretiva inteira (de `#` até `\n`) e a classifica conforme seu tipo.
+
+### P: A diretiva `#` ainda é reportada como erro?
+
+**R:** Não mais! Antes era `TK_ERROR`. Agora é tokenizado corretamente como um dos 7 tipos de pré-processador.
+
 ---
 
 ## 🔗 Referências

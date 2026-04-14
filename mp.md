@@ -47,54 +47,91 @@ Este manual documenta a implementação do **Analisador Léxico** conforme o enu
 
 ## 🏗️ Arquitetura Geral
 
+### Estrutura Minimalista - Separation of Concerns
+
+```c
+/* main.c - 21 linhas PURO */
+int main(int argc, char *argv[]) {
+    print_header();
+    
+    const char *input, *output;
+    if (validate_args(argc, argv, &input, &output) != 0)
+        return 1;
+    
+    int error_count;
+    lexer_t *lexer = run_lexical_analysis(input, output, &error_count);
+    if (lexer == NULL)
+        return 2;
+    
+    print_summary(lexer, error_count);
+    cleanup(lexer);
+    
+    return (error_count == 0) ? 0 : 1;
+}
+```
+
+**Princípio:** main.c é apenas ORCHESTRATION. Toda lógica está em `utils/printer.c`:
+- `validate_args()` - Valida argumentos do programa
+- `run_lexical_analysis()` - Loop de análise léxica com analex()
+- `print_summary()` - Resumo de análise
+- `cleanup()` - Liberação de recursos
+
 ### Estrutura de Diretórios
 
 ```
 mycompiler/
-├── main.c                      # Programa principal
+├── main.c                      # Orquestrador (21 linhas)
 ├── Makefile                    # Build automation
 ├── teste_entrada.c             # Arquivo de teste
+├── utils/                      # TODA LÓGICA AUXILIAR
+│   ├── printer.h
+│   └── printer.c               # validate_args, run_lexical_analysis, cleanup
+├── src/lexer/                  # MOTOR DE TOKENS
+│   ├── lexer.h
+│   ├── lexer.c                 # analex() delega para FSM
+│   ├── lexer_fsm.c             # Máquina de estados (Q0-Q35)
+│   ├── lexer_io.c              # ler_caractere, volta_caractere
+│   ├── lexer_token.c           # gravar_token_lexema
+│   ├── lexer_init.c            # criar_lexer, liberar_lexer
+│   ├── tokens.h                # Definição de tokens (82+)
+│   ├── tokens.c                # Tabela de símbolos, identificar_preprocessor
+│   ├── keywords.h
+│   └── keywords.c              # Lookup de palavras-chave
 ├── mu.md                       # Manual do Usuário
-├── mp.md                       # Este arquivo
-├── CompiladorAutomatos.jff     # Autômato visual (JFLAP)
-└── src/lexer/
-    ├── lexer.h                 # Interface do lexer
-    ├── lexer.c                 # Implementação (máquina de estados)
-    ├── tokens.h                # Definição de tipos de token
-    ├── tokens.c                # Implementação de tabela de símbolos
-    ├── keywords.h              # Interface de keywords
-    └── keywords.c              # Tabela de palavras-chave
+└── mp.md                       # Este arquivo
 ```
 
 ### Fluxo de Dados
 
 ```
-┌──────────────────┐
-│  main.c          │
-│                  │
-│  • Abre arquivo  │
-│  • Cria lexer    │
-│  • Chama analex  │
-└────────┬─────────┘
-         │
-         ↓
-    ┌────────────────┐
-    │  lexer.c       │──→ keywords.c (procurar keyword)
-    │                │
-    │  • ler_caracte │
-    │  • volta_carac │
-    │  • máquina de  │
-    │    estados     │
-    └────────┬───────┘
-             │
-             ↓
-    ┌────────────────┐
-    │  tokens.c      │
-    │                │
-    │  • criar token │
-    │  • tabla símb  │
-    │  • imprimir    │
-    └────────────────┘
+┌──────────────────────────────┐
+│  main.c (21 linhas)          │
+│  - Print header              │
+│  - Validate args             │
+│  - Call run_lexical_analysis │
+│  - Print summary             │
+│  - Cleanup                   │
+└──────────────┬───────────────┘
+               │
+               ↓
+    ┌──────────────────────────┐
+    │  utils/printer.c         │
+    │  - validate_args()       │
+    │  - Loop com analex()     │
+    │  - Imprime tabela        │
+    │  - cleanup()             │
+    └──────────────┬───────────┘
+                   │
+         ┌─────────┴─────────┐
+         ↓                   ↓
+    ┌─────────────┐    ┌──────────────┐
+    │ lexer_fsm   │    │ tokens.c     │
+    │ (Q0-Q35)    │    │ (Symbol Tbl) │
+    │ 35 estados  │    │ (82+ tokens) │
+    └─────────────┘    └──────────────┘
+             ↑                 ↑
+             └── keywords.c ──┘
+             └── lexer_io.c ──┘
 ```
 
 ---
@@ -228,7 +265,44 @@ mycompiler/
 #define TK_ERROR        301  /* Erro léxico */
 ```
 
-**Total: ~75 tipos de tokens**
+### Diretivas de Pré-processador (7 total) ⭐ NOVO
+
+```c
+#define TK_PP_INCLUDE   250  /* #include */
+#define TK_PP_DEFINE    251  /* #define */
+#define TK_PP_IFDEF     252  /* #ifdef */
+#define TK_PP_IFNDEF    253  /* #ifndef */
+#define TK_PP_ENDIF     254  /* #endif */
+#define TK_PP_PRAGMA    255  /* #pragma */
+#define TK_PP_OTHER     256  /* #... (outras diretivas) */
+```
+
+**Implementação:** Novo estado FSM `Q35_PP_DIRECTIVE` acumula de `#` até `\n`.  
+Função `identificar_preprocessor()` classifica o tipo específico.
+
+```c
+int identificar_preprocessor(const char *lexema) {
+    // Pula # e espaços
+    int i = (lexema[0] == '#') ? 1 : 0;
+    while (lexema[i] == ' ' || lexema[i] == '\t') i++;
+    
+    // Compara com diretivas conhecidas
+    if (strncmp(&lexema[i], "include", 7) == 0) return TK_PP_INCLUDE;
+    if (strncmp(&lexema[i], "define", 6) == 0)  return TK_PP_DEFINE;
+    // ... etc
+    return TK_PP_OTHER;
+}
+```
+
+**Exemplos de Tokenização:**
+```
+#include <stdio.h>        → TK_PP_INCLUDE
+#define MAX_SIZE 100      → TK_PP_DEFINE
+#ifdef DEBUG              → TK_PP_IFDEF
+#pragma pack(1)           → TK_PP_PRAGMA
+```
+
+**Total: ~82 tipos de tokens**
 
 ---
 
@@ -286,16 +360,27 @@ q0 (INICIAL)
 OUTRO: qualquer caractere que encerre o padrão atual
 ```
 
-### Estados Completos (q0-q79)
+### Estados Completos (Q0-Q35) ⭐ ATUALIZADO
 
-Conforme arquivo `CompiladorAutomatos.jff`:
-- **q0:** Estado inicial
-- **q1-q5:** Reconhecimento de identificadores
-- **q10-q15:** Reconhecimento de números
-- **q20-q25:** Reconhecimento de strings
-- **q30-q35:** Reconhecimento de caracteres
-- **q40-q50:** Transições de operadores
-- **q60-q79:** Estados adicionais para símbolos especiais
+Implementação em `lexer_fsm.c`:
+
+| Grupo | Estados | Função |
+|-------|---------|--------|
+| **G0** | Q0 | Estado inicial - classifica entrada |
+| **G1** | Q1 | Whitespace (espaços, tabs, newlines) |
+| **G2** | Q2 | Identificadores e palavras-chave |
+| **G3** | Q3, Q5 | Números inteiros e floats |
+| **G4** | Q6, Q7, Q9, Q10 | Comentários (// e /* */) |
+| **G5** | Q13-Q27 | Operadores e compostos (=, ==, +=, etc.) |
+| **G6** | Q28-Q32 | Strings e character literals |
+| **G7** | Q35 | Diretivas de pré-processador (#...) |
+
+**Máquina de Estados Finita Determinística:**
+- Q0: Entrada → Determina categoria léxica
+- Q1-Q34: Estados intermediários (transições)
+- Q35: Novo! Pré-processador (acumula até \n)
+
+Arquivo: `CompiladorAutomatos.jff` (JFLAP format)
 
 ---
 
