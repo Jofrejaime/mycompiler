@@ -21,7 +21,7 @@
    ESTRUTURA DO LEXER (MÁQUINA DE ESTADOS)
    ============================================================================ */
 
-typedef struct {
+typedef struct lexer_s {
     FILE *arquivo_entrada;      /* Arquivo-fonte sendo analisado */
     char buffer[1024];          /* Buffer de entrada (para leitura eficiente) */
     int pos_buffer;             /* Posição atual no buffer */
@@ -35,7 +35,7 @@ typedef struct {
     char lexema[256];           /* Acumulador de caracteres do lexema */
     int pos_lexema;             /* Posição no lexema */
     
-    TablaSimbolos *tabla_simbolos;  /* Tabela de símbolos */
+    tabla_simbolos_t *tabla_simbolos;  /* Tabela de símbolos */
     
     /* Controle de retraçamento */
     char caractere_retratado;   /* Caractere lido demais (volta_caractere) */
@@ -43,7 +43,7 @@ typedef struct {
     
     /* Estado atual da máquina de estados */
     int estado_atual;           /* Estado do autômato finito determinístico */
-} Lexer;
+} lexer_t;
 
 /* ============================================================================
    ESTADOS DO AUTÔMATO FINITO DETERMINÍSTICO (Máquina de Estados)
@@ -66,7 +66,7 @@ typedef struct {
    Faz a validação do lexema e token, chamando gravar_token_lexema().
    
    Entrada: lexer - estrutura do lexer já inicializada
-   Saída: Token - o próximo token encontrado no arquivo
+   Saída: token_t - o próximo token encontrado no arquivo
    
    Algoritmo:
    - Pula espaços em branco
@@ -77,7 +77,7 @@ typedef struct {
    - Chama volta_caractere() quando necessário (transição "outro")
    - Retorna token criado
 */
-Token analex(Lexer *lexer);
+token_t analex(lexer_t *lexer);
 
 /*
    2. LER_CARACTERE() - Leitura Caractere por Caractere
@@ -91,7 +91,7 @@ Token analex(Lexer *lexer);
    
    Nota: Função interna, chamada por analex()
 */
-char ler_caractere(Lexer *lexer);
+char ler_caractere(lexer_t *lexer);
 
 /*
    3. VOLTA_CARACTERE() - Retraçamento (Backtracking)
@@ -107,24 +107,24 @@ char ler_caractere(Lexer *lexer);
    
    Nota: Armazena em lexer->caractere_retratado para próxima leitura
 */
-void volta_caractere(Lexer *lexer, char c);
+void volta_caractere(lexer_t *lexer, char c);
 
 /*
    4. GRAVAR_TOKEN_LEXEMA() - Guardar na Tabela de Símbolos
    
-   Descrição: Recebe tipo e lexema, cria Token e armazena
-   na tabela de símbolos (TablaSimbolos).
+   Descrição: Recebe tipo e lexema, cria token_t e armazena
+   na tabela de símbolos (tabla_simbolos_t).
    
    Entrada: lexer - estrutura do lexer
             tipo - tipo de token (KW_INT, TK_ID, NUM, ...)
             lexema - string do token ("int", "x", "123", etc.)
             linha - linha no arquivo
             coluna - coluna no arquivo
-   Saída: Token - o token criado e guardado
+   Saída: token_t - o token criado e guardado
    
    Nota: Função complementar a analex()
 */
-Token gravar_token_lexema(Lexer *lexer, int tipo, const char *lexema, 
+token_t gravar_token_lexema(lexer_t *lexer, int tipo, const char *lexema, 
                           int linha, int coluna);
 
 /* ============================================================================
@@ -137,7 +137,7 @@ Token gravar_token_lexema(Lexer *lexer, int tipo, const char *lexema,
    Entrada: nome_arquivo - caminho do arquivo-fonte a analisar
    Saída: ponteiro para Lexer inicializado, ou NULL se erro
 */
-Lexer* criar_lexer(const char *nome_arquivo);
+lexer_t* criar_lexer(const char *nome_arquivo);
 
 /*
    Liberar recursos do lexer
@@ -145,16 +145,16 @@ Lexer* criar_lexer(const char *nome_arquivo);
    Entrada: lexer - estrutura a liberar
    Saída: void
 */
-void liberar_lexer(Lexer *lexer);
+void liberar_lexer(lexer_t *lexer);
 
 /* ============================================================================
    FUNÇÕES DE UTILIDADE
    ============================================================================ */
 
 /* Processar arquivo inteiro: lê todos os tokens até EOF */
-TablaSimbolos* processar_arquivo_completo(const char *nome_arquivo);
+tabla_simbolos_t* processar_arquivo_completo(const char *nome_arquivo);
 
 /* Imprimir estado debug do lexer */
-void debug_lexer(Lexer *lexer);
+void debug_lexer(lexer_t *lexer);
 
 #endif /* LEXER_H */

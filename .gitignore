@@ -1,0 +1,94 @@
+# Arquivos compilados e binários
+*.o
+*.obj
+*.exe
+*.out
+*.a
+*.so
+*.dylib
+*.dll
+*.lib
+
+# Executáveis
+analisador_lexico
+analisador_lexico.exe
+parser
+lexer
+
+# Artefatos de build
+build/
+dist/
+*.dSYM/
+*.su
+
+# Arquivos de saída
+*.txt
+tabela_simbolos.txt
+saida_*.txt
+
+# Cache e temporários
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# IDE e editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.cproject
+.settings/
+
+# Ferramentas de build
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile.local
+
+# Dependências
+node_modules/
+*.pyc
+__pycache__/
+
+# Logs
+*.log
+debug.log
+
+# Testes gerados
+test_output/
+*.gcda
+*.gcno
+coverage/
+
+# Imagens e mídia (screenshots pessoais)
+*.jpeg
+*.jpg
+*.png
+*.gif
+*.bmp
+
+# Arquivos do SO
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Git
+.git/
+.gitmodules
+
+# Documentação gerada automaticamente (manter apenas essencial)
+# mp.md e mu.md são importantes - manter!
+# Outros .md redundantes:
+ARQUITETURA_COMPILADOR.md
+AS_7_FASES_COMPILACAO.md
+GUIA_COMPLETO_COMPILADOR.md
+PLANO_COMPILADOR_COMPLETO.md
+RESUMO_VISUAL.md
+validacao_enunciado.sh
+validacao_completa.sh

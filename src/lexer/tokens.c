@@ -13,17 +13,17 @@
    Inicializa uma nova tabela com capacidade inicial
    Aloca espaço para array de tokens
    ============================================================================ */
-TablaSimbolos* criar_tabla_simbolos(int capacidade_inicial) {
+tabla_simbolos_t* criar_tabla_simbolos(int capacidade_inicial) {
     if (capacidade_inicial <= 0) {
         capacidade_inicial = 100;
     }
     
-    TablaSimbolos *ts = (TablaSimbolos *)malloc(sizeof(TablaSimbolos));
+    tabla_simbolos_t *ts = (tabla_simbolos_t *)malloc(sizeof(tabla_simbolos_t));
     if (ts == NULL) {
         return NULL;
     }
     
-    ts->tokens = (Token *)malloc(sizeof(Token) * capacidade_inicial);
+    ts->tokens = (token_t *)malloc(sizeof(token_t) * capacidade_inicial);
     if (ts->tokens == NULL) {
         free(ts);
         return NULL;
@@ -42,7 +42,7 @@ TablaSimbolos* criar_tabla_simbolos(int capacidade_inicial) {
    Se tabela está cheia, realoca com capacidade dobrada
    Copia token para array
    ============================================================================ */
-void adicionar_token(TablaSimbolos *ts, Token t) {
+void adicionar_token(tabla_simbolos_t *ts, token_t t) {
     if (ts == NULL) {
         return;
     }
@@ -51,7 +51,7 @@ void adicionar_token(TablaSimbolos *ts, Token t) {
     if (ts->quantidade >= ts->capacidade) {
         /* Dobrar capacidade */
         int nova_capacidade = ts->capacidade * 2;
-        Token *novo_array = (Token *)realloc(ts->tokens, sizeof(Token) * nova_capacidade);
+        token_t *novo_array = (token_t *)realloc(ts->tokens, sizeof(token_t) * nova_capacidade);
         
         if (novo_array == NULL) {
             fprintf(stderr, "Erro: Não foi possível expandir tabela de símbolos\n");
@@ -72,7 +72,7 @@ void adicionar_token(TablaSimbolos *ts, Token t) {
    
    Libera memória alocada para array de tokens e estrutura
    ============================================================================ */
-void liberar_tabla_simbolos(TablaSimbolos *ts) {
+void liberar_tabla_simbolos(tabla_simbolos_t *ts) {
     if (ts == NULL) {
         return;
     }
@@ -196,7 +196,7 @@ const char* tipo_token_para_string(int tipo) {
    Função de debug: exibe todos os tokens em formato tabular
    Mostra: tipo, lexema, linha, coluna
    ============================================================================ */
-void imprimir_tabla_simbolos(TablaSimbolos *ts) {
+void imprimir_tabla_simbolos(tabla_simbolos_t *ts) {
     if (ts == NULL || ts->quantidade == 0) {
         printf("Tabela de símbolos vazia\n");
         return;
@@ -210,7 +210,7 @@ void imprimir_tabla_simbolos(TablaSimbolos *ts) {
     printf("╟─────┼─────────────────────────┼────────────────┼───────┼────────┼───────╢\n");
     
     for (int i = 0; i < ts->quantidade; i++) {
-        Token *t = &ts->tokens[i];
+        token_t *t = &ts->tokens[i];
         const char *tipo_str = tipo_token_para_string(t->tipo);
         
         printf("│ %3d │ %-23s │ %-14s │ %5d │ %6d │",

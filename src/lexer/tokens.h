@@ -114,7 +114,7 @@
    ESTRUTURA DE DADOS: TOKEN
    ============================================================================ */
 
-typedef struct {
+typedef struct token_s {
     int tipo;                   /* Tipo de token (constante #define) */
     char lexeme[256];           /* String do token: "int", "x", "10", etc. */
     int linha;                  /* Linha no arquivo-fonte */
@@ -123,34 +123,34 @@ typedef struct {
         int valor_int;          /* Para TK_NUM_INT */
         double valor_float;     /* Para TK_NUM_FLOAT e TK_NUM_EXP */
     } valor;
-} Token;
+} token_t;
 
 /* ============================================================================
    ESTRUTURA: SYMBOL TABLE (Tabela de Símbolos)
    ============================================================================ */
 
-typedef struct {
-    Token *tokens;              /* Array de tokens */
+typedef struct tabla_simbolos_s {
+    token_t *tokens;              /* Array de tokens */
     int quantidade;             /* Número de tokens adicionados */
     int capacidade;             /* Capacidade máxima do array */
     int posicao_leitura;        /* Posição atual para leitura (para parser) */
-} TablaSimbolos;
+} tabla_simbolos_t;
 
 /* ============================================================================
    FUNÇÕES DE UTILIDADE PARA TOKENS
    ============================================================================ */
 
 /* Criar e inicializar tabela de símbolos */
-TablaSimbolos* criar_tabla_simbolos(int capacidade_inicial);
+tabla_simbolos_t* criar_tabla_simbolos(int capacidade_inicial);
 
 /* Adicionar token à tabela */
-void adicionar_token(TablaSimbolos *ts, Token t);
+void adicionar_token(tabla_simbolos_t *ts, token_t t);
 
 /* Liberar memória da tabela */
-void liberar_tabla_simbolos(TablaSimbolos *ts);
+void liberar_tabla_simbolos(tabla_simbolos_t *ts);
 
 /* Imprimir tabela de símbolos (debug) */
-void imprimir_tabla_simbolos(TablaSimbolos *ts);
+void imprimir_tabla_simbolos(tabla_simbolos_t *ts);
 
 /* Converter tipo de token para string (para debug) */
 const char* tipo_token_para_string(int tipo);

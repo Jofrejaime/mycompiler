@@ -8,7 +8,7 @@
    O lexer consulta esta tabela quando encontra um identificador
    ============================================================================ */
 
-static Palavra_Chave tabela_palavras_chave[] = {
+static palavra_chave_t tabela_palavras_chave[] = {
     /* Tipos de dados */
     {"int",         KW_INT},
     {"char",        KW_CHAR},
@@ -77,9 +77,9 @@ int procurar_palavra_chave(const char *palavra) {
    OBTER TABELA COMPLETA DE PALAVRAS-CHAVE (para debug/documentação)
    
    Entrada: ponteiro para variável que ficará com a quantidade
-   Saída: ponteiro para array de Palavra_Chave
+   Saída: ponteiro para array de palavra_chave_t
    ============================================================================ */
-Palavra_Chave* obter_tabela_palavras_chave(int *quantidade) {
+palavra_chave_t* obter_tabela_palavras_chave(int *quantidade) {
     if (quantidade == NULL) {
         return NULL;
     }
@@ -90,5 +90,5 @@ Palavra_Chave* obter_tabela_palavras_chave(int *quantidade) {
         (*quantidade)++;
     }
     
-    return (Palavra_Chave *)tabela_palavras_chave;
+    return (palavra_chave_t *)tabela_palavras_chave;
 }

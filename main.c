@@ -71,20 +71,20 @@ int main(int argc, char *argv[]) {
     
     /* ========== ETAPA 1: CRIAR LEXER ========== */
     printf("⏳ Criando lexer...\n");
-    Lexer *lexer = criar_lexer(arquivo_entrada);
+    lexer_t *lexer = criar_lexer(arquivo_entrada);
     
     if (lexer == NULL) {
         fprintf(stderr, "❌ ERRO: Não foi possível abrir arquivo '%s'\n", arquivo_entrada);
         return 2;
     }
     
-    printf("✓ Lexer criado com sucesso\n\n");
+    printf("✓ lexer_t criado com sucesso\n\n");
     
     /* ========== ETAPA 2: EXECUTAR ANÁLISE LÉXICA ========== */
     printf("⏳ Executando análise léxica (função analex)...\n");
     printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n");
     
-    Token token;
+    token_t token;
     int contador_tokens = 0;
     int contador_erros = 0;
     
@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
         
         int num = 0;
         for (int i = 0; i < lexer->tabla_simbolos->quantidade; i++) {
-            Token *t = &lexer->tabla_simbolos->tokens[i];
+            token_t *t = &lexer->tabla_simbolos->tokens[i];
             
             if (t->tipo == TK_EOF) continue;
             
