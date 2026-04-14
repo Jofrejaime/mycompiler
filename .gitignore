@@ -91,6 +91,12 @@ coverage/
 *.bmp
 *.mp4
 *.avi
+*.docx
+*.doc
+*.odt
+*.pdf
+*.xlsx
+*.xls
 
 # ============================================================================
 # SCRIPTS DE VALIDACAO (IGNORAR - recriar conforme necessario)
