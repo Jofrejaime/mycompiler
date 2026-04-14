@@ -140,6 +140,9 @@ const char* tipo_token_para_string(int tipo) {
         case OP_MINUS_ASSIGN: return "OP_MINUS_ASSIGN (-=)";
         case OP_MULT_ASSIGN: return "OP_MULT_ASSIGN (*=)";
         case OP_DIV_ASSIGN: return "OP_DIV_ASSIGN (/=)";
+        case OP_AND_ASSIGN: return "OP_AND_ASSIGN (&=)";
+        case OP_OR_ASSIGN:  return "OP_OR_ASSIGN (|=)";
+        case OP_XOR_ASSIGN: return "OP_XOR_ASSIGN (^=)";
         
         /* Operadores relacionais */
         case OP_EQ:         return "OP_EQ (==)";

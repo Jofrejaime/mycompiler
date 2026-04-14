@@ -64,6 +64,9 @@
 #define OP_MINUS_ASSIGN 112     /* -= */
 #define OP_MULT_ASSIGN  113     /* *= */
 #define OP_DIV_ASSIGN   114     /* /= */
+#define OP_AND_ASSIGN   115     /* &= */
+#define OP_OR_ASSIGN    116     /* |= */
+#define OP_XOR_ASSIGN   117     /* ^= */
 
 /* Operadores Relacionais */
 #define OP_EQ           120     /* == */
