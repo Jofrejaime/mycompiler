@@ -25,7 +25,7 @@ src/parser/
 
 ## Tasks
 
-- [ ] 1. Configurar infraestrutura básica do parser
+- [x] 1. Configurar infraestrutura básica do parser
   - Criar estrutura de diretórios `src/parser/`
   - Criar arquivos de cabeçalho e implementação vazios
   - Atualizar Makefile para compilar módulos do parser
@@ -39,40 +39,40 @@ src/parser/
     - Incluir campos: type, line, column, data (union com decl, stmt, expr), children, child_count
     - _Requirements: 14.2, 14.3, 14.4_
 
-  - [ ] 2.2 Criar estrutura `scope_t` em `scope.h`
+  - [~] 2.2 Criar estrutura `scope_t` em `scope.h`
     - Definir estrutura `scope_t` com scope_id, parent, local_symbols, symbol_count, symbol_capacity
     - Documentar hierarquia de escopos (global = 0, função, bloco)
     - _Requirements: 7.1, 7.5_
 
-  - [ ] 2.3 Criar estrutura `symbol_info_t` em `parser.h`
+  - [~] 2.3 Criar estrutura `symbol_info_t` em `parser.h`
     - Definir enum para variable_type (VAR_GLOBAL, VAR_LOCAL, VAR_PARAMETER, VAR_STRUCT_FIELD)
     - Definir estrutura `symbol_info_t` com campos: data_type, is_pointer, variable_type, scope_id, memory_address, size_bytes, is_array, array_dimensions, array_dim_count, is_function, function_return_type, function_param_types, function_param_count
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 6.1, 6.2, 6.3_
 
-  - [ ] 2.4 Criar estrutura `parser_t` em `parser.h`
+  - [~] 2.4 Criar estrutura `parser_t` em `parser.h`
     - Definir estrutura `parser_t` com campos: symbol_table (ponteiro para tabla_simbolos_t), current_position, scope_stack, scope_stack_size, scope_stack_capacity, next_scope_id, next_memory_address, error_count, panic_mode, ast_root
     - Incluir comentários explicando cada campo
     - _Requirements: 1.1, 1.2, 7.1_
 
 
 - [ ] 3. Implementar funções de consumo de tokens
-  - [ ] 3.1 Implementar `peek_token()` em `parser.c`
+  - [~] 3.1 Implementar `peek_token()` em `parser.c`
     - Retornar token atual sem avançar posição: `symbol_table->tokens[current_position]`
     - Verificar se current_position está dentro dos limites
     - Retornar token TK_EOF se ultrapassar limite
     - _Requirements: 1.5_
 
-  - [ ] 3.2 Implementar `consume_token()` em `parser.c`
+  - [~] 3.2 Implementar `consume_token()` em `parser.c`
     - Retornar token atual e incrementar current_position
     - Usar peek_token() internamente
     - _Requirements: 1.3_
 
-  - [ ] 3.3 Implementar `match()` em `parser.c`
+  - [~] 3.3 Implementar `match()` em `parser.c`
     - Verificar se peek_token().tipo == token_type esperado
     - Retornar 1 se match, 0 caso contrário
     - _Requirements: 4.1_
 
-  - [ ] 3.4 Implementar `expect()` em `parser.c`
+  - [~] 3.4 Implementar `expect()` em `parser.c`
     - Chamar match() para verificar token esperado
     - Se match, chamar consume_token() e retornar
     - Se não match, chamar syntax_error() com mensagem descritiva
@@ -80,75 +80,75 @@ src/parser/
 
 
 - [ ] 4. Implementar gerenciamento de escopos
-  - [ ] 4.1 Implementar `enter_scope()` em `scope.c`
+  - [~] 4.1 Implementar `enter_scope()` em `scope.c`
     - Criar novo scope_t com scope_id único (next_scope_id++)
     - Definir parent como scope atual no topo da pilha (ou NULL se global)
     - Empilhar novo scope na scope_stack
     - Redimensionar pilha se necessário (realloc)
     - _Requirements: 7.2_
 
-  - [ ] 4.2 Implementar `exit_scope()` em `scope.c`
+  - [~] 4.2 Implementar `exit_scope()` em `scope.c`
     - Desempilhar scope do topo da pilha
     - Liberar memória do scope removido
     - _Requirements: 7.3_
 
-  - [ ] 4.3 Implementar `get_current_scope_id()` em `scope.c`
+  - [~] 4.3 Implementar `get_current_scope_id()` em `scope.c`
     - Retornar scope_id do scope no topo da pilha
     - Retornar 0 se pilha vazia (escopo global)
     - _Requirements: 7.5_
 
-  - [ ] 4.4 Implementar `lookup_symbol()` em `scope.c`
+  - [~] 4.4 Implementar `lookup_symbol()` em `scope.c`
     - Buscar símbolo no scope atual
     - Se não encontrado, buscar recursivamente em parent scopes
     - Retornar symbol_info_t* ou NULL se não encontrado
     - _Requirements: 7.4_
 
-  - [ ] 4.5 Implementar `add_symbol_to_scope()` em `scope.c`
+  - [~] 4.5 Implementar `add_symbol_to_scope()` em `scope.c`
     - Adicionar nome de símbolo ao array local_symbols do scope atual
     - Redimensionar array se necessário
     - _Requirements: 7.4_
 
 
 - [ ] 5. Implementar funções de construção de AST
-  - [ ] 5.1 Implementar `create_ast_node()` em `ast.c`
+  - [~] 5.1 Implementar `create_ast_node()` em `ast.c`
     - Alocar memória para ast_node_t usando malloc
     - Inicializar campos: type, line, column
     - Inicializar children como NULL e child_count como 0
     - Retornar ponteiro para nó criado
     - _Requirements: 14.1_
 
-  - [ ] 5.2 Implementar `add_ast_child()` em `ast.c`
+  - [~] 5.2 Implementar `add_ast_child()` em `ast.c`
     - Adicionar child ao array children do parent
     - Redimensionar array se necessário (realloc)
     - Incrementar child_count
     - _Requirements: 14.1_
 
-  - [ ] 5.3 Implementar `create_binary_op_node()` em `ast.c`
+  - [~] 5.3 Implementar `create_binary_op_node()` em `ast.c`
     - Criar nó NODE_BINARY_OP
     - Definir operator, left, right
     - Retornar nó criado
     - _Requirements: 14.4_
 
-  - [ ] 5.4 Implementar `create_unary_op_node()` em `ast.c`
+  - [~] 5.4 Implementar `create_unary_op_node()` em `ast.c`
     - Criar nó NODE_UNARY_OP
     - Definir operator, operand (em left)
     - Retornar nó criado
     - _Requirements: 14.4_
 
-  - [ ] 5.5 Implementar `create_identifier_node()` em `ast.c`
+  - [~] 5.5 Implementar `create_identifier_node()` em `ast.c`
     - Criar nó NODE_IDENTIFIER
     - Copiar nome do identificador para data.expr.identifier
     - Retornar nó criado
     - _Requirements: 14.4_
 
-  - [ ] 5.6 Implementar `create_literal_node()` em `ast.c`
+  - [~] 5.6 Implementar `create_literal_node()` em `ast.c`
     - Criar nó NODE_LITERAL
     - Extrair valor do token (int, float, char, string)
     - Armazenar em data.expr.value
     - Retornar nó criado
     - _Requirements: 14.4_
 
-  - [ ] 5.7 Implementar `free_ast()` em `ast.c`
+  - [~] 5.7 Implementar `free_ast()` em `ast.c`
     - Liberar recursivamente todos os children
     - Liberar strings alocadas dinamicamente
     - Liberar o próprio nó
@@ -156,34 +156,34 @@ src/parser/
 
 
 - [ ] 6. Implementar enriquecimento da tabela de símbolos
-  - [ ] 6.1 Implementar `enrich_symbol_type()` em `parser.c`
+  - [~] 6.1 Implementar `enrich_symbol_type()` em `parser.c`
     - Buscar token na symbol_table pelo nome
     - Adicionar campos data_type e is_pointer ao token
     - _Requirements: 5.1_
 
-  - [ ] 6.2 Implementar `enrich_symbol_scope()` em `parser.c`
+  - [~] 6.2 Implementar `enrich_symbol_scope()` em `parser.c`
     - Buscar token na symbol_table pelo nome
     - Adicionar campos scope_id e variable_type ao token
     - _Requirements: 5.2, 5.3_
 
-  - [ ] 6.3 Implementar `enrich_symbol_memory()` em `parser.c`
+  - [~] 6.3 Implementar `enrich_symbol_memory()` em `parser.c`
     - Buscar token na symbol_table pelo nome
     - Adicionar campos memory_address e size_bytes ao token
     - _Requirements: 5.4, 5.5_
 
-  - [ ] 6.4 Implementar `enrich_symbol_array()` em `parser.c`
+  - [~] 6.4 Implementar `enrich_symbol_array()` em `parser.c`
     - Buscar token na symbol_table pelo nome
     - Adicionar campos is_array, array_dimensions, array_dim_count ao token
     - _Requirements: 11.3, 11.4_
 
-  - [ ] 6.5 Implementar `enrich_symbol_function()` em `parser.c`
+  - [~] 6.5 Implementar `enrich_symbol_function()` em `parser.c`
     - Buscar token na symbol_table pelo nome
     - Adicionar campos is_function, function_return_type, function_param_types, function_param_count ao token
     - _Requirements: 6.1, 6.2, 6.3_
 
 
 - [ ] 7. Implementar parsing de expressões primárias e pós-fixas
-  - [ ] 7.1 Implementar `parse_primario()` em `parser_expr.c`
+  - [~] 7.1 Implementar `parse_primario()` em `parser_expr.c`
     - Implementar produção: `<primario> ::= TOKEN_IDENTIFIER | TOKEN_INT_LITERAL | TOKEN_FLOAT_LITERAL | TOKEN_CHAR_LITERAL | TOKEN_STRING_LITERAL | TOKEN_LPAREN <expressao> TOKEN_RPAREN`
     - Usar switch/case baseado em peek_token().tipo
     - Para identificadores: criar NODE_IDENTIFIER
@@ -192,14 +192,14 @@ src/parser/
     - Retornar ast_node_t* criado
     - _Requirements: 2.1, 2.2, 10.10_
 
-  - [ ] 7.2 Implementar `parse_pos_fixo()` em `parser_expr.c`
+  - [~] 7.2 Implementar `parse_pos_fixo()` em `parser_expr.c`
     - Implementar produção: `<pos_fixo> ::= <primario> <pos_fixo_r>`
     - Chamar parse_primario() para obter nó base
     - Chamar parse_pos_fixo_r() passando ponteiro para nó base
     - Retornar nó (possivelmente modificado por _r)
     - _Requirements: 10.6, 10.7, 10.8_
 
-  - [ ] 7.3 Implementar `parse_pos_fixo_r()` em `parser_expr.c`
+  - [~] 7.3 Implementar `parse_pos_fixo_r()` em `parser_expr.c`
     - Implementar produção auxiliar: `<pos_fixo_r> ::= TOKEN_LBRACKET <expressao> TOKEN_RBRACKET <pos_fixo_r> | TOKEN_DOT TOKEN_IDENTIFIER <pos_fixo_r> | TOKEN_LPAREN <argumentos_opcionais> TOKEN_RPAREN <pos_fixo_r> | ε`
     - Usar loop while para processar múltiplos operadores pós-fixos
     - Para `[expr]`: criar NODE_ARRAY_ACCESS com left=base, right=index
@@ -210,7 +210,7 @@ src/parser/
 
 
 - [ ] 8. Implementar parsing de expressões unárias
-  - [ ] 8.1 Implementar `parse_unario()` em `parser_expr.c`
+  - [~] 8.1 Implementar `parse_unario()` em `parser_expr.c`
     - Implementar produção: `<unario> ::= TOKEN_NOT <unario> | TOKEN_MINUS <unario> | TOKEN_AMP <unario> | TOKEN_STAR <unario> | <pos_fixo>`
     - Verificar se token atual é operador unário (!, -, &, *)
     - Se sim: consumir operador, chamar parse_unario() recursivamente, criar NODE_UNARY_OP
@@ -220,7 +220,7 @@ src/parser/
 
 
 - [ ] 9. Implementar parsing de expressões com precedência de operadores
-  - [ ] 9.1 Implementar `parse_multiplicativo()` e `parse_multiplicativo_r()` em `parser_expr.c`
+  - [~] 9.1 Implementar `parse_multiplicativo()` e `parse_multiplicativo_r()` em `parser_expr.c`
     - Implementar produção: `<multiplicativo> ::= <unario> <multiplicativo_r>`
     - Implementar produção auxiliar: `<multiplicativo_r> ::= TOKEN_STAR <unario> <multiplicativo_r> | TOKEN_SLASH <unario> <multiplicativo_r> | TOKEN_PERCENT <unario> <multiplicativo_r> | ε`
     - parse_multiplicativo(): chamar parse_unario(), depois parse_multiplicativo_r()
@@ -228,7 +228,7 @@ src/parser/
     - Criar NODE_BINARY_OP para cada operador encontrado
     - _Requirements: 10.1, 10.9_
 
-  - [ ] 9.2 Implementar `parse_aditivo()` e `parse_aditivo_r()` em `parser_expr.c`
+  - [~] 9.2 Implementar `parse_aditivo()` e `parse_aditivo_r()` em `parser_expr.c`
     - Implementar produção: `<aditivo> ::= <multiplicativo> <aditivo_r>`
     - Implementar produção auxiliar: `<aditivo_r> ::= TOKEN_PLUS <multiplicativo> <aditivo_r> | TOKEN_MINUS <multiplicativo> <aditivo_r> | ε`
     - parse_aditivo(): chamar parse_multiplicativo(), depois parse_aditivo_r()
@@ -236,7 +236,7 @@ src/parser/
     - Criar NODE_BINARY_OP para cada operador encontrado
     - _Requirements: 10.1, 10.9_
 
-  - [ ] 9.3 Implementar `parse_relacional()` e `parse_relacional_r()` em `parser_expr.c`
+  - [~] 9.3 Implementar `parse_relacional()` e `parse_relacional_r()` em `parser_expr.c`
     - Implementar produção: `<relacional> ::= <aditivo> <relacional_r>`
     - Implementar produção auxiliar: `<relacional_r> ::= TOKEN_LT <aditivo> <relacional_r> | TOKEN_GT <aditivo> <relacional_r> | TOKEN_LEQ <aditivo> <relacional_r> | TOKEN_GEQ <aditivo> <relacional_r> | ε`
     - parse_relacional(): chamar parse_aditivo(), depois parse_relacional_r()
@@ -244,7 +244,7 @@ src/parser/
     - Criar NODE_BINARY_OP para cada operador encontrado
     - _Requirements: 10.2, 10.9_
 
-  - [ ] 9.4 Implementar `parse_igualdade()` e `parse_igualdade_r()` em `parser_expr.c`
+  - [~] 9.4 Implementar `parse_igualdade()` e `parse_igualdade_r()` em `parser_expr.c`
     - Implementar produção: `<igualdade> ::= <relacional> <igualdade_r>`
     - Implementar produção auxiliar: `<igualdade_r> ::= TOKEN_EQ <relacional> <igualdade_r> | TOKEN_NEQ <relacional> <igualdade_r> | ε`
     - parse_igualdade(): chamar parse_relacional(), depois parse_igualdade_r()
@@ -252,7 +252,7 @@ src/parser/
     - Criar NODE_BINARY_OP para cada operador encontrado
     - _Requirements: 10.2, 10.9_
 
-  - [ ] 9.5 Implementar `parse_logico_e()` e `parse_logico_e_r()` em `parser_expr.c`
+  - [~] 9.5 Implementar `parse_logico_e()` e `parse_logico_e_r()` em `parser_expr.c`
     - Implementar produção: `<logico_e> ::= <igualdade> <logico_e_r>`
     - Implementar produção auxiliar: `<logico_e_r> ::= TOKEN_AND <igualdade> <logico_e_r> | ε`
     - parse_logico_e(): chamar parse_igualdade(), depois parse_logico_e_r()
@@ -260,7 +260,7 @@ src/parser/
     - Criar NODE_BINARY_OP para cada operador encontrado
     - _Requirements: 10.3, 10.9_
 
-  - [ ] 9.6 Implementar `parse_logico_ou()` e `parse_logico_ou_r()` em `parser_expr.c`
+  - [~] 9.6 Implementar `parse_logico_ou()` e `parse_logico_ou_r()` em `parser_expr.c`
     - Implementar produção: `<logico_ou> ::= <logico_e> <logico_ou_r>`
     - Implementar produção auxiliar: `<logico_ou_r> ::= TOKEN_OR <logico_e> <logico_ou_r> | ε`
     - parse_logico_ou(): chamar parse_logico_e(), depois parse_logico_ou_r()
@@ -268,21 +268,21 @@ src/parser/
     - Criar NODE_BINARY_OP para cada operador encontrado
     - _Requirements: 10.3, 10.9_
 
-  - [ ] 9.7 Implementar `parse_atribuicao()` e `parse_atribuicao_r()` em `parser_expr.c`
+  - [~] 9.7 Implementar `parse_atribuicao()` e `parse_atribuicao_r()` em `parser_expr.c`
     - Implementar produção: `<atribuicao> ::= <logico_ou> <atribuicao_r>`
     - Implementar produção auxiliar: `<atribuicao_r> ::= TOKEN_ASSIGN <atribuicao> | TOKEN_PLUS_ASSIGN <atribuicao> | TOKEN_MINUS_ASSIGN <atribuicao> | TOKEN_STAR_ASSIGN <atribuicao> | TOKEN_SLASH_ASSIGN <atribuicao> | TOKEN_PERCENT_ASSIGN <atribuicao> | ε`
     - parse_atribuicao(): chamar parse_logico_ou(), depois parse_atribuicao_r()
     - parse_atribuicao_r(): verificar operadores de atribuição, criar NODE_ASSIGN
     - _Requirements: 10.4, 10.9_
 
-  - [ ] 9.8 Implementar `parse_expressao()` em `parser_expr.c`
+  - [~] 9.8 Implementar `parse_expressao()` em `parser_expr.c`
     - Implementar produção: `<expressao> ::= <atribuicao>`
     - Simplesmente chamar parse_atribuicao() e retornar resultado
     - Esta é a função de entrada para parsing de expressões
     - _Requirements: 2.5, 10.9_
 
 
-- [ ] 10. Checkpoint - Validar parsing de expressões
+- [~] 10. Checkpoint - Validar parsing de expressões
   - Compilar módulo parser_expr.c
   - Criar programa de teste simples com expressões aritméticas, lógicas e relacionais
   - Verificar se AST é construída corretamente para expressões
@@ -290,7 +290,7 @@ src/parser/
 
 
 - [ ] 11. Implementar parsing de instruções básicas
-  - [ ] 11.1 Implementar `parse_instrucao_expressao()` em `parser_stmt.c`
+  - [~] 11.1 Implementar `parse_instrucao_expressao()` em `parser_stmt.c`
     - Implementar produção: `<instrucao_expressao> ::= <expressao> TOKEN_SEMICOLON`
     - Chamar parse_expressao() para obter nó de expressão
     - Consumir TOKEN_SEMICOLON com expect()
@@ -298,7 +298,7 @@ src/parser/
     - Retornar nó criado
     - _Requirements: 9.8_
 
-  - [ ] 11.2 Implementar `parse_instrucao_return()` em `parser_stmt.c`
+  - [~] 11.2 Implementar `parse_instrucao_return()` em `parser_stmt.c`
     - Implementar produção: `<instrucao_return> ::= TOKEN_RETURN <expressao_opcional> TOKEN_SEMICOLON`
     - Consumir TOKEN_RETURN
     - Verificar se próximo token não é TOKEN_SEMICOLON
@@ -308,7 +308,7 @@ src/parser/
     - Retornar nó criado
     - _Requirements: 9.6_
 
-  - [ ] 11.3 Implementar `parse_bloco()` em `parser_stmt.c`
+  - [~] 11.3 Implementar `parse_bloco()` em `parser_stmt.c`
     - Implementar produção: `<bloco> ::= TOKEN_LBRACE <lista_itens_bloco> TOKEN_RBRACE`
     - Consumir TOKEN_LBRACE
     - Chamar enter_scope() para criar novo escopo
@@ -325,7 +325,7 @@ src/parser/
 
 
 - [ ] 12. Implementar parsing de estruturas de controle
-  - [ ] 12.1 Implementar `parse_instrucao_if()` em `parser_stmt.c`
+  - [~] 12.1 Implementar `parse_instrucao_if()` em `parser_stmt.c`
     - Implementar produção: `<instrucao_if> ::= TOKEN_IF TOKEN_LPAREN <expressao> TOKEN_RPAREN <instrucao> <ramo_else_opcional>`
     - Consumir TOKEN_IF e TOKEN_LPAREN
     - Chamar parse_expressao() para obter condição
@@ -337,7 +337,7 @@ src/parser/
     - Retornar nó criado
     - _Requirements: 9.1_
 
-  - [ ] 12.2 Implementar `parse_instrucao_while()` em `parser_stmt.c`
+  - [~] 12.2 Implementar `parse_instrucao_while()` em `parser_stmt.c`
     - Implementar produção: `<instrucao_while> ::= TOKEN_WHILE TOKEN_LPAREN <expressao> TOKEN_RPAREN <instrucao>`
     - Consumir TOKEN_WHILE e TOKEN_LPAREN
     - Chamar parse_expressao() para obter condição
@@ -347,7 +347,7 @@ src/parser/
     - Retornar nó criado
     - _Requirements: 9.2_
 
-  - [ ] 12.3 Implementar `parse_instrucao_do()` em `parser_stmt.c`
+  - [~] 12.3 Implementar `parse_instrucao_do()` em `parser_stmt.c`
     - Implementar produção: `<instrucao_do> ::= TOKEN_DO <instrucao> TOKEN_WHILE TOKEN_LPAREN <expressao> TOKEN_RPAREN TOKEN_SEMICOLON`
     - Consumir TOKEN_DO
     - Chamar parse_instrucao() para obter corpo do loop
@@ -358,7 +358,7 @@ src/parser/
     - Retornar nó criado
     - _Requirements: 9.4_
 
-  - [ ] 12.4 Implementar `parse_instrucao_for()` em `parser_stmt.c`
+  - [~] 12.4 Implementar `parse_instrucao_for()` em `parser_stmt.c`
     - Implementar produção: `<instrucao_for> ::= TOKEN_FOR TOKEN_LPAREN <expressao_opcional> TOKEN_SEMICOLON <expressao_opcional> TOKEN_SEMICOLON <expressao_opcional> TOKEN_RPAREN <instrucao>`
     - Consumir TOKEN_FOR e TOKEN_LPAREN
     - Verificar se próximo token não é TOKEN_SEMICOLON, se não for: chamar parse_expressao() para init
@@ -372,7 +372,7 @@ src/parser/
     - Retornar nó criado
     - _Requirements: 9.3_
 
-  - [ ] 12.5 Implementar `parse_instrucao()` em `parser_stmt.c`
+  - [~] 12.5 Implementar `parse_instrucao()` em `parser_stmt.c`
     - Implementar produção: `<instrucao> ::= <instrucao_expressao> | <instrucao_if> | <instrucao_while> | <instrucao_for> | <instrucao_do> | <instrucao_return> | <bloco> | TOKEN_SEMICOLON`
     - Usar switch/case baseado em peek_token().tipo
     - TOKEN_IF → parse_instrucao_if()
@@ -387,7 +387,7 @@ src/parser/
     - _Requirements: 2.5, 9.1, 9.2, 9.3, 9.4, 9.6, 9.7, 9.8_
 
 
-- [ ] 13. Checkpoint - Validar parsing de instruções
+- [~] 13. Checkpoint - Validar parsing de instruções
   - Compilar módulo parser_stmt.c
   - Criar programa de teste com if, while, for, do-while, return, blocos
   - Verificar se AST é construída corretamente para instruções
@@ -396,7 +396,7 @@ src/parser/
 
 
 - [ ] 14. Implementar parsing de declarações de variáveis
-  - [ ] 14.1 Implementar `parse_especificador_tipo()` em `parser_decl.c`
+  - [~] 14.1 Implementar `parse_especificador_tipo()` em `parser_decl.c`
     - Implementar produção: `<especificador_tipo> ::= KW_INT | KW_CHAR | KW_FLOAT | KW_VOID | KW_STRUCT <nome_ou_corpo_struct> | TOKEN_IDENTIFIER`
     - Usar switch/case baseado em peek_token().tipo
     - Para KW_INT, KW_CHAR, KW_FLOAT, KW_VOID: consumir e retornar tipo
@@ -405,7 +405,7 @@ src/parser/
     - Retornar código do tipo (KW_INT, KW_CHAR, etc.)
     - _Requirements: 8.1, 8.5, 12.1, 12.2, 12.3_
 
-  - [ ] 14.2 Implementar `parse_declaracao_variavel_global()` em `parser_decl.c`
+  - [~] 14.2 Implementar `parse_declaracao_variavel_global()` em `parser_decl.c`
     - Implementar produção: `<declaracao_variavel_global> ::= <especificador_tipo> <asteriscos> TOKEN_IDENTIFIER <sufixo_array_opcional> <inicializacao_opcional> <mais_declaradores> TOKEN_SEMICOLON`
     - Chamar parse_especificador_tipo() para obter tipo base
     - Contar asteriscos para determinar nível de ponteiro
@@ -422,7 +422,7 @@ src/parser/
     - Criar NODE_VAR_DECL e retornar
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 8.2, 11.1, 11.2, 11.3, 11.4, 11.5_
 
-  - [ ] 14.3 Implementar `is_type_specifier()` em `parser_decl.c`
+  - [~] 14.3 Implementar `is_type_specifier()` em `parser_decl.c`
     - Verificar se token é KW_INT, KW_CHAR, KW_FLOAT, KW_VOID, KW_STRUCT, ou TOKEN_IDENTIFIER (typedef)
     - Retornar 1 se for especificador de tipo, 0 caso contrário
     - Função auxiliar usada para distinguir declarações de instruções
@@ -430,7 +430,7 @@ src/parser/
 
 
 - [ ] 15. Implementar parsing de declarações de funções
-  - [ ] 15.1 Implementar `parse_lista_parametros()` em `parser_decl.c`
+  - [~] 15.1 Implementar `parse_lista_parametros()` em `parser_decl.c`
     - Implementar produção: `<lista_parametros> ::= <parametro> <mais_parametros> | KW_VOID | ε`
     - Verificar se próximo token é KW_VOID (função sem parâmetros)
     - Se não: loop consumindo parâmetros separados por TOKEN_COMMA
@@ -441,7 +441,7 @@ src/parser/
     - Retornar array de nós de parâmetros e contagem
     - _Requirements: 6.2, 6.3_
 
-  - [ ] 15.2 Implementar `parse_declaracao_funcao()` em `parser_decl.c`
+  - [~] 15.2 Implementar `parse_declaracao_funcao()` em `parser_decl.c`
     - Implementar produção: `<declaracao_funcao> ::= <especificador_tipo> <asteriscos> TOKEN_IDENTIFIER TOKEN_LPAREN <lista_parametros> TOKEN_RPAREN <bloco>`
     - Chamar parse_especificador_tipo() para obter tipo de retorno
     - Contar asteriscos para ponteiros
@@ -458,7 +458,7 @@ src/parser/
     - Retornar nó criado
     - _Requirements: 6.1, 6.2, 6.3, 8.3_
 
-  - [ ] 15.3 Implementar verificação de função main
+  - [~] 15.3 Implementar verificação de função main
     - Verificar se pelo menos uma função declarada tem nome "main"
     - Marcar função main como ponto de entrada
     - Reportar erro se main não for encontrada ao final do parsing
@@ -466,7 +466,7 @@ src/parser/
 
 
 - [ ] 16. Implementar parsing de structs e unions
-  - [ ] 16.1 Implementar `parse_nome_ou_corpo_struct()` em `parser_decl.c`
+  - [~] 16.1 Implementar `parse_nome_ou_corpo_struct()` em `parser_decl.c`
     - Implementar produção: `<nome_ou_corpo_struct> ::= TOKEN_IDENTIFIER <corpo_struct_opcional> | <corpo_struct>`
     - Verificar se próximo token é TOKEN_IDENTIFIER (nome do struct)
     - Se sim: consumir nome, verificar se há TOKEN_LBRACE para corpo
@@ -475,7 +475,7 @@ src/parser/
     - Retornar nó de struct com nome e campos
     - _Requirements: 8.6, 12.1, 12.3_
 
-  - [ ] 16.2 Implementar `parse_corpo_struct()` em `parser_decl.c`
+  - [~] 16.2 Implementar `parse_corpo_struct()` em `parser_decl.c`
     - Implementar produção: `<corpo_struct> ::= TOKEN_LBRACE <lista_campos_struct> TOKEN_RBRACE`
     - Consumir TOKEN_LBRACE
     - Loop: enquanto não encontrar TOKEN_RBRACE
@@ -490,7 +490,7 @@ src/parser/
     - Retornar array de campos
     - _Requirements: 12.1, 12.4, 12.6_
 
-  - [ ] 16.3 Implementar cálculo de tamanho de struct/union
+  - [~] 16.3 Implementar cálculo de tamanho de struct/union
     - Para struct: somar tamanhos de todos os campos
     - Para union: usar máximo dos tamanhos dos campos
     - Considerar alinhamento de memória (padding)
@@ -499,7 +499,7 @@ src/parser/
 
 
 - [ ] 17. Implementar parsing de declarações globais e programa completo
-  - [ ] 17.1 Implementar `parse_declaracao_global()` em `parser_decl.c`
+  - [~] 17.1 Implementar `parse_declaracao_global()` em `parser_decl.c`
     - Implementar produção: `<declaracao_global> ::= <diretiva_include> | <diretiva_define> | <declaracao_typedef> | <declaracao_geral>`
     - Usar switch/case baseado em peek_token().tipo
     - TOKEN_HASH: verificar se é #include ou #define
@@ -509,7 +509,7 @@ src/parser/
     - Adicionar nó ao programa
     - _Requirements: 8.1, 8.2, 8.3, 8.5, 8.6_
 
-  - [ ] 17.2 Implementar `parse_diretiva_include()` em `parser_decl.c`
+  - [~] 17.2 Implementar `parse_diretiva_include()` em `parser_decl.c`
     - Implementar produção: `<diretiva_include> ::= TOKEN_HASH KW_INCLUDE TOKEN_STRING_LITERAL`
     - Consumir TOKEN_HASH, verificar se próximo é KW_INCLUDE
     - Consumir TOKEN_STRING_LITERAL ou TOKEN_LT ... TOKEN_GT
@@ -517,7 +517,7 @@ src/parser/
     - Não criar nó AST (diretivas são pré-processamento)
     - _Requirements: 8.1_
 
-  - [ ] 17.3 Implementar `parse_diretiva_define()` em `parser_decl.c`
+  - [~] 17.3 Implementar `parse_diretiva_define()` em `parser_decl.c`
     - Implementar produção: `<diretiva_define> ::= TOKEN_HASH KW_DEFINE TOKEN_IDENTIFIER <valor_opcional>`
     - Consumir TOKEN_HASH, verificar se próximo é KW_DEFINE
     - Consumir TOKEN_IDENTIFIER para nome da macro
@@ -526,7 +526,7 @@ src/parser/
     - Não criar nó AST (diretivas são pré-processamento)
     - _Requirements: 8.1_
 
-  - [ ] 17.4 Implementar `parse_declaracao_typedef()` em `parser_decl.c`
+  - [~] 17.4 Implementar `parse_declaracao_typedef()` em `parser_decl.c`
     - Implementar produção: `<declaracao_typedef> ::= KW_TYPEDEF <especificador_tipo> TOKEN_IDENTIFIER TOKEN_SEMICOLON`
     - Consumir KW_TYPEDEF
     - Chamar parse_especificador_tipo() para obter tipo base
@@ -536,7 +536,7 @@ src/parser/
     - Criar NODE_TYPEDEF_DECL
     - _Requirements: 8.5_
 
-  - [ ] 17.5 Implementar `parse_lista_declaracoes_globais()` em `parser.c`
+  - [~] 17.5 Implementar `parse_lista_declaracoes_globais()` em `parser.c`
     - Implementar produção: `<lista_declaracoes_globais> ::= <declaracao_global> <lista_declaracoes_globais> | ε`
     - Loop: enquanto não encontrar TK_EOF
       - Chamar parse_declaracao_global()
@@ -546,7 +546,7 @@ src/parser/
 
 
 - [ ] 18. Implementar tratamento de erros sintáticos
-  - [ ] 18.1 Implementar `syntax_error()` em `parser_error.c`
+  - [~] 18.1 Implementar `syntax_error()` em `parser_error.c`
     - Receber mensagem de erro, token esperado, token encontrado
     - Formatar mensagem: "Erro sintático na linha X, coluna Y: esperado 'TOKEN_X', encontrado 'TOKEN_Y'"
     - Imprimir mensagem em stderr
@@ -554,14 +554,14 @@ src/parser/
     - Ativar parser->panic_mode
     - _Requirements: 13.1, 13.2, 13.3, 13.4_
 
-  - [ ] 18.2 Implementar `panic_mode_recovery()` em `parser_error.c`
+  - [~] 18.2 Implementar `panic_mode_recovery()` em `parser_error.c`
     - Consumir tokens até encontrar ponto de sincronização
     - Pontos de sincronização: TOKEN_SEMICOLON, TOKEN_RBRACE, TK_EOF
     - Desativar parser->panic_mode após sincronização
     - Permitir que parsing continue após erro
     - _Requirements: 13.5_
 
-  - [ ] 18.3 Implementar `synchronize()` em `parser_error.c`
+  - [~] 18.3 Implementar `synchronize()` em `parser_error.c`
     - Função auxiliar para encontrar próximo ponto seguro
     - Verificar se token atual é início de declaração ou instrução
     - Consumir tokens até encontrar token de sincronização
@@ -570,7 +570,7 @@ src/parser/
 
 
 - [ ] 19. Implementar integração com Lexer e inicialização
-  - [ ] 19.1 Implementar `parser_init()` em `parser.c`
+  - [~] 19.1 Implementar `parser_init()` em `parser.c`
     - Alocar memória para parser_t
     - Receber tabla_simbolos_t* como parâmetro
     - Inicializar current_position = 0
@@ -582,13 +582,13 @@ src/parser/
     - Retornar ponteiro para parser_t
     - _Requirements: 1.1, 1.2, 19.1, 19.2_
 
-  - [ ] 19.2 Implementar `parser_free()` em `parser.c`
+  - [~] 19.2 Implementar `parser_free()` em `parser.c`
     - Liberar scope_stack e todos os scopes
     - Liberar AST com free_ast()
     - Liberar estrutura parser_t
     - _Requirements: 19.3, 19.4_
 
-  - [ ] 19.3 Implementar `parser_run()` em `parser.c`
+  - [~] 19.3 Implementar `parser_run()` em `parser.c`
     - Função principal de entrada do parser
     - Chamar parse_programa() para iniciar parsing
     - Verificar se error_count > 0
@@ -598,7 +598,7 @@ src/parser/
 
 
 - [ ] 20. Implementar funções de debug e visualização
-  - [ ] 20.1 Implementar `print_symbol_table_enriched()` em `parser.c`
+  - [~] 20.1 Implementar `print_symbol_table_enriched()` em `parser.c`
     - Iterar sobre todos os tokens na symbol_table
     - Para cada token com informações enriquecidas:
       - Imprimir: nome, tipo, escopo, endereço, tamanho
@@ -607,7 +607,7 @@ src/parser/
     - Formatar saída em tabela legível
     - _Requirements: 15.5_
 
-  - [ ] 20.2 Implementar `print_ast()` em `ast.c`
+  - [~] 20.2 Implementar `print_ast()` em `ast.c`
     - Imprimir AST em formato textual hierárquico
     - Usar indentação para mostrar níveis
     - Para cada nó: imprimir tipo, linha, coluna
@@ -617,7 +617,7 @@ src/parser/
     - Percorrer recursivamente todos os children
     - _Requirements: 15.6_
 
-  - [ ] 20.3 Implementar `print_scope_stack()` em `scope.c`
+  - [~] 20.3 Implementar `print_scope_stack()` em `scope.c`
     - Imprimir pilha de escopos atual
     - Para cada escopo: imprimir scope_id, parent_id, símbolos locais
     - Mostrar hierarquia de escopos
@@ -626,7 +626,7 @@ src/parser/
 
 
 - [ ] 21. Criar suite de testes para o parser
-  - [ ] 21.1 Criar testes para declarações de variáveis
+  - [~] 21.1 Criar testes para declarações de variáveis
     - Testar variáveis globais de todos os tipos (int, char, float)
     - Testar variáveis locais em funções e blocos
     - Testar ponteiros de múltiplos níveis (int*, int**, int***)
@@ -635,7 +635,7 @@ src/parser/
     - Verificar enriquecimento correto da symbol_table
     - _Requirements: 18.1, 18.3_
 
-  - [ ] 21.2 Criar testes para declarações de funções
+  - [~] 21.2 Criar testes para declarações de funções
     - Testar função main obrigatória
     - Testar funções com diferentes tipos de retorno
     - Testar funções com múltiplos parâmetros
@@ -644,7 +644,7 @@ src/parser/
     - Verificar enriquecimento correto da symbol_table
     - _Requirements: 18.1, 18.3_
 
-  - [ ] 21.3 Criar testes para estruturas de controle
+  - [~] 21.3 Criar testes para estruturas de controle
     - Testar if com e sem else
     - Testar while, for, do-while
     - Testar switch-case-default
@@ -653,7 +653,7 @@ src/parser/
     - Verificar construção correta da AST
     - _Requirements: 18.4_
 
-  - [ ] 21.4 Criar testes para expressões
+  - [~] 21.4 Criar testes para expressões
     - Testar expressões aritméticas com precedência correta
     - Testar expressões lógicas e relacionais
     - Testar operadores de atribuição
@@ -663,7 +663,7 @@ src/parser/
     - Verificar construção correta da AST
     - _Requirements: 18.5_
 
-  - [ ] 21.5 Criar testes para structs e unions
+  - [~] 21.5 Criar testes para structs e unions
     - Testar declaração de struct com corpo
     - Testar declaração de struct sem corpo
     - Testar union
@@ -672,7 +672,7 @@ src/parser/
     - Verificar cálculo correto de tamanhos
     - _Requirements: 18.7_
 
-  - [ ] 21.6 Criar testes para erros sintáticos
+  - [~] 21.6 Criar testes para erros sintáticos
     - Testar tokens inesperados
     - Testar falta de ponto-e-vírgula
     - Testar parênteses/chaves não balanceados
@@ -681,7 +681,7 @@ src/parser/
     - Verificar recuperação de erro (modo pânico)
     - _Requirements: 18.2_
 
-  - [ ] 21.7 Criar testes para gerenciamento de escopos
+  - [~] 21.7 Criar testes para gerenciamento de escopos
     - Testar variáveis globais vs locais com mesmo nome
     - Testar escopos aninhados (blocos dentro de funções)
     - Testar parâmetros de função
@@ -689,7 +689,7 @@ src/parser/
     - Verificar scope_id correto para cada símbolo
     - _Requirements: 18.3_
 
-  - [ ] 21.8 Criar testes para arrays multidimensionais
+  - [~] 21.8 Criar testes para arrays multidimensionais
     - Testar arrays 2D, 3D, até 8D
     - Testar acesso a elementos de arrays multidimensionais
     - Testar inicialização de arrays multidimensionais
@@ -698,14 +698,14 @@ src/parser/
 
 
 - [ ] 22. Criar Manual do Usuário
-  - [ ] 22.1 Escrever seção de introdução
+  - [~] 22.1 Escrever seção de introdução
     - Explicar o que é o parser e sua função no compilador
     - Explicar a relação com o Lexer (Fase 1)
     - Explicar o formato de entrada (arquivo .c)
     - Explicar o formato de saída (Symbol_Table + AST)
     - _Requirements: 17.1, 17.2_
 
-  - [ ] 22.2 Escrever seção de exemplos de uso
+  - [~] 22.2 Escrever seção de exemplos de uso
     - Fornecer exemplo de programa C válido simples
     - Fornecer exemplo de programa C com funções
     - Fornecer exemplo de programa C com structs
@@ -713,7 +713,7 @@ src/parser/
     - Mostrar saída do parser para cada exemplo
     - _Requirements: 17.3_
 
-  - [ ] 22.3 Escrever seção de mensagens de erro
+  - [~] 22.3 Escrever seção de mensagens de erro
     - Listar tipos de erros sintáticos detectados
     - Fornecer exemplos de código com erro
     - Mostrar mensagem de erro correspondente
@@ -721,7 +721,7 @@ src/parser/
     - Explicar como corrigir erros comuns
     - _Requirements: 17.4, 17.5_
 
-  - [ ] 22.4 Formatar e revisar Manual do Usuário
+  - [~] 22.4 Formatar e revisar Manual do Usuário
     - Garantir 4-8 páginas conforme requisito acadêmico
     - Adicionar índice e numeração de páginas
     - Adicionar exemplos visuais (tabelas, diagramas)
@@ -731,21 +731,21 @@ src/parser/
 
 
 - [ ] 23. Criar Manual do Programador
-  - [ ] 23.1 Escrever seção de arquitetura do parser
+  - [~] 23.1 Escrever seção de arquitetura do parser
     - Documentar estrutura de diretórios e arquivos
     - Documentar estruturas de dados principais (parser_t, ast_node_t, scope_t, symbol_info_t)
     - Documentar fluxo de execução do parser
     - Incluir diagrama de arquitetura
     - _Requirements: 16.1_
 
-  - [ ] 23.2 Escrever seção de gramática original
+  - [~] 23.2 Escrever seção de gramática original
     - Documentar gramática EBNF original completa
     - Identificar todas as regras com recursividade à esquerda
     - Identificar ambiguidades na gramática original
     - Explicar por que transformações são necessárias
     - _Requirements: 16.1, 16.2_
 
-  - [ ] 23.3 Escrever seção de transformações gramaticais
+  - [~] 23.3 Escrever seção de transformações gramaticais
     - Documentar eliminação de recursividade à esquerda imediata
     - Documentar eliminação de recursividade à esquerda indireta
     - Documentar fatoração de gramática
@@ -753,14 +753,14 @@ src/parser/
     - Explicar padrão de produções auxiliares com sufixo "_r"
     - _Requirements: 16.2, 16.3_
 
-  - [ ] 23.4 Escrever seção de FIRST sets
+  - [~] 23.4 Escrever seção de FIRST sets
     - Documentar algoritmo de cálculo de FIRST sets
     - Listar FIRST sets de todos os não-terminais
     - Documentar tabela de parsing preditivo
     - Explicar como FIRST sets garantem parsing LL(1)
     - _Requirements: 16.4_
 
-  - [ ] 23.5 Escrever seção de mapeamento gramática-código
+  - [~] 23.5 Escrever seção de mapeamento gramática-código
     - Documentar mapeamento entre não-terminais e funções C
     - Listar todas as funções de parsing com assinaturas
     - Explicar convenção de nomenclatura (parse_*)
@@ -768,7 +768,7 @@ src/parser/
     - Documentar funções auxiliares (_r)
     - _Requirements: 16.5_
 
-  - [ ] 23.6 Escrever seção de enriquecimento da tabela de símbolos
+  - [~] 23.6 Escrever seção de enriquecimento da tabela de símbolos
     - Documentar campos adicionados aos tokens
     - Explicar cálculo de endereços de memória
     - Explicar cálculo de tamanhos de tipos
@@ -776,21 +776,21 @@ src/parser/
     - Fornecer exemplos de enriquecimento
     - _Requirements: 16.1_
 
-  - [ ] 23.7 Escrever seção de construção da AST
+  - [~] 23.7 Escrever seção de construção da AST
     - Documentar tipos de nós da AST
     - Explicar hierarquia de nós
     - Documentar funções de construção de AST
     - Fornecer exemplos de AST para programas simples
     - _Requirements: 16.1_
 
-  - [ ] 23.8 Escrever seção de tratamento de erros
+  - [~] 23.8 Escrever seção de tratamento de erros
     - Documentar estratégia de modo pânico
     - Documentar pontos de sincronização
     - Explicar recuperação de erros
     - Fornecer exemplos de mensagens de erro
     - _Requirements: 16.1_
 
-  - [ ] 23.9 Formatar e revisar Manual do Programador
+  - [~] 23.9 Formatar e revisar Manual do Programador
     - Garantir 8-16 páginas conforme requisito acadêmico
     - Adicionar índice e numeração de páginas
     - Adicionar diagramas e tabelas
@@ -800,35 +800,35 @@ src/parser/
 
 
 - [ ] 24. Integração final e validação completa
-  - [ ] 24.1 Integrar parser com lexer existente
+  - [~] 24.1 Integrar parser com lexer existente
     - Verificar compatibilidade de interfaces
     - Testar fluxo completo: arquivo .c → Lexer → Parser → AST
     - Verificar que symbol_table é corretamente compartilhada
     - Ajustar tipos de tokens se necessário
     - _Requirements: 15.3, 15.4_
 
-  - [ ] 24.2 Executar suite completa de testes
+  - [~] 24.2 Executar suite completa de testes
     - Executar todos os testes criados na tarefa 21
     - Verificar que todos os testes passam
     - Corrigir bugs encontrados
     - Documentar resultados dos testes
     - _Requirements: 18.1, 18.2, 18.3, 18.4, 18.5, 18.6, 18.7, 18.8_
 
-  - [ ] 24.3 Validar performance do parser
+  - [~] 24.3 Validar performance do parser
     - Testar com arquivo de 10.000 linhas
     - Medir tempo de execução (deve ser < 5 segundos)
     - Medir uso de memória (deve ser < 100 MB)
     - Otimizar se necessário
     - _Requirements: 20.1, 20.2, 20.3, 20.4, 20.5_
 
-  - [ ] 24.4 Validar gerenciamento de memória
+  - [~] 24.4 Validar gerenciamento de memória
     - Executar parser com valgrind ou ferramenta similar
     - Verificar que não há vazamentos de memória
     - Verificar que toda memória alocada é liberada
     - Corrigir vazamentos se encontrados
     - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5_
 
-  - [ ] 24.5 Preparar entrega final
+  - [~] 24.5 Preparar entrega final
     - Compilar todos os módulos do parser
     - Gerar executável final do compilador (Lexer + Parser)
     - Testar executável com programas de exemplo

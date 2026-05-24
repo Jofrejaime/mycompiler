@@ -1,9 +1,26 @@
-# 🎯 ANALISADOR LÉXICO - FASE 1 DO COMPILADOR
+# 🎯 COMPILADOR C SIMPLIFICADO
 
 **Instituto Superior Politécnico de Tecnologias e Ciências (ISPTEC)**  
 **Disciplina:** Compiladores - M3  
 **Professor:** André Filemon  
-**Aluno:** Jofre Jaime Jamuinda Mutumbungo 
+**Aluno:** Jofre Jaime Jamuinda Mutumbungo  
+**Deadline:** 20-05-2026 | **Defesa:** 21-05-2026
+
+---
+
+## 📚 Documentação Completa
+
+**🌟 [Acesse a Wiki Completa do Projeto](wiki/Home.md)**
+
+### Links Rápidos da Wiki
+
+- 📖 **[Página Principal](wiki/Home.md)** - Visão geral do projeto
+- 🔤 **[Análise Léxica (Fase 1)](wiki/Lexer.md)** - ✅ Completo
+- 🌳 **[Análise Sintática (Fase 2)](wiki/Parser.md)** - 🚧 Em Desenvolvimento
+- 📋 **[Tabela de Tokens](wiki/Token-Table.md)** - 82+ tokens
+- 📝 **[Gramática Sintática](wiki/Syntactic-Grammar.md)** - Gramática LL(1)
+- 👤 **[Manual do Usuário](wiki/Manual-Usuario.md)** - Como usar o compilador
+- 👨‍💻 **[Manual do Programador](wiki/Manual-Programador.md)** - Arquitetura interna
 
 ---
 
