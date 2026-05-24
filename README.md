@@ -4,8 +4,6 @@
 **Disciplina:** Compiladores - M3  
 **Professor:** André Filemon  
 **Aluno:** Jofre Jaime Jamuinda Mutumbungo 
-**Data de Entrega:** 14/04/2026  
-**Data de Defesa:** 16/04/2026
 
 ---
 
@@ -22,8 +20,7 @@ mycompiler/
 │
 ├── 📖 MANUAIS
 │   ├── mu.md                                 ← Manual do Usuário (8 páginas)
-│   ├── mp.md                                 ← Manual do Programador (20+ páginas)
-│   └── ARQUITETURA_COMPILADOR.md             ← Guia de Arquitetura
+│   └── mp.md                                 ← Manual do Programador (20+ páginas)
 │
 ├── 📚 TEORIA E PLANEJAMENTO
 │   ├── PLANO_COMPILADOR_COMPLETO.md          ← Plano das 7 fases
@@ -255,7 +252,7 @@ Os erros são:
 ✅ **Expressões Regulares**  
 ✅ **Tabela de Símbolos**  
 ✅ **Tabela de Palavras-chave (Lookup)**  
-✅ **Buffer de Entrada (1KB)**  
+✅ **Buffer de Entrada**  
 ✅ **Backtracking/Retraçamento**  
 ✅ **Rastreamento de Posição (linha/coluna)**  
 ✅ **Tratamento de Erros Léxicos**  
@@ -284,10 +281,7 @@ Os erros são:
 ## 📞 Informações de Entrega
 
 **Professor:** André Filemon  
-**Email:** compiladores2023@gmail.com  
 **Disciplina:** Compiladores - M3  
-**Data Limite:** 14/04/2026 às 23:50  
-**Defesa:** 16/04/2026
 
 ---
 

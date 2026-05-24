@@ -3,16 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* ============================================================================
-   IMPLEMENTAÇÃO: TABELA DE SÍMBOLOS E FUNÇÕES DE TOKEN
-   ============================================================================ */
 
-/* ============================================================================
-   CRIAR TABELA DE SÍMBOLOS
-   
-   Inicializa uma nova tabela com capacidade inicial
-   Aloca espaço para array de tokens
-   ============================================================================ */
 tabla_simbolos_t* criar_tabla_simbolos(int capacidade_inicial) {
     if (capacidade_inicial <= 0) {
         capacidade_inicial = 100;
@@ -36,12 +27,6 @@ tabla_simbolos_t* criar_tabla_simbolos(int capacidade_inicial) {
     return ts;
 }
 
-/* ============================================================================
-   ADICIONAR TOKEN À TABELA
-   
-   Se tabela está cheia, realoca com capacidade dobrada
-   Copia token para array
-   ============================================================================ */
 void adicionar_token(tabla_simbolos_t *ts, token_t t) {
     if (ts == NULL) {
         return;
@@ -67,11 +52,6 @@ void adicionar_token(tabla_simbolos_t *ts, token_t t) {
     ts->quantidade++;
 }
 
-/* ============================================================================
-   LIBERAR TABELA DE SÍMBOLOS
-   
-   Libera memória alocada para array de tokens e estrutura
-   ============================================================================ */
 void liberar_tabla_simbolos(tabla_simbolos_t *ts) {
     if (ts == NULL) {
         return;
@@ -84,12 +64,6 @@ void liberar_tabla_simbolos(tabla_simbolos_t *ts) {
     free(ts);
 }
 
-/* ============================================================================
-   CONVERTER TIPO DE TOKEN PARA STRING
-   
-   Útil para debugging e exibição
-   Retorna string descritiva do tipo de token
-   ============================================================================ */
 const char* tipo_token_para_string(int tipo) {
     switch (tipo) {
         /* Palavras-chave */
@@ -202,12 +176,6 @@ const char* tipo_token_para_string(int tipo) {
     }
 }
 
-/* ============================================================================
-   IMPRIMIR TABELA DE SÍMBOLOS
-   
-   Função de debug: exibe todos os tokens em formato tabular
-   Mostra: tipo, lexema, linha, coluna
-   ============================================================================ */
 void imprimir_tabla_simbolos(tabla_simbolos_t *ts) {
     if (ts == NULL || ts->quantidade == 0) {
         printf("Tabela de simbolos vazia\n");
@@ -241,22 +209,13 @@ void imprimir_tabla_simbolos(tabla_simbolos_t *ts) {
     printf("+--------+-------------------------+----------------+-------+--------+-------+\n");
 }
 
-/* ============================================================================
-   FUNCAO: Identificar tipo de preprocessor
-   
-   Analisa o lexema de um preprocessor token (ex: "include <stdio.h>")
-   e retorna o tipo apropriado (TK_PP_INCLUDE, TK_PP_DEFINE, etc)
-   
-   ============================================================================ */
 int identificar_preprocessor(const char *lexema) {
     if (lexema == NULL || lexema[0] == '\0')
         return TK_PP_OTHER;
     
-    /* Pular # e espacos iniciais */
     int i = 0;
-    if (lexema[i] == '#') i++;  /* Pular # */
-    while (lexema[i] == ' ' || lexema[i] == '\t') i++;  /* Pular espaços */
-    
+    if (lexema[i] == '#') i++; 
+    while (lexema[i] == ' ' || lexema[i] == '\t') i++;
     /* Comparar diretivas comuns */
     if (strncmp(&lexema[i], "include", 7) == 0) {
         return TK_PP_INCLUDE;
@@ -272,6 +231,5 @@ int identificar_preprocessor(const char *lexema) {
         return TK_PP_PRAGMA;
     }
     
-    /* Outra diretiva nao reconhecida */
     return TK_PP_OTHER;
 }

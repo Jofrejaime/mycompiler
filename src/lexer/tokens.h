@@ -5,17 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* ============================================================================
-   ENUNCIADO DE COMPILADORES - PROF. ANDRÉ FILEMON
-   ANALISADOR LÉXICO - DEFINIÇÃO DE TOKENS
-   
-   Baseado em: Compiladores - Princípios, Técnicas e Ferramentas
-   ============================================================================ */
-
-/* ============================================================================
-   TOKEN TYPES - CONSTANTES COM #define
-   ============================================================================ */
-
 /* Palavras-chave da linguagem C (Subconjunto) */
 #define KW_INT          1
 #define KW_CHAR         2
@@ -127,13 +116,13 @@
    ============================================================================ */
 
 typedef struct token_s {
-    int tipo;                   /* Tipo de token (constante #define) */
-    char lexeme[256];           /* String do token: "int", "x", "10", etc. */
-    int linha;                  /* Linha no arquivo-fonte */
-    int coluna;                 /* Coluna no arquivo-fonte */
+    int tipo;                  
+    char lexeme[256];           
+    int linha;                  
+    int coluna;                
     union {
-        int valor_int;          /* Para TK_NUM_INT */
-        double valor_float;     /* Para TK_NUM_FLOAT e TK_NUM_EXP */
+        int valor_int;         
+        double valor_float;    
     } valor;
 } token_t;
 
@@ -148,26 +137,16 @@ typedef struct tabla_simbolos_s {
     int posicao_leitura;        /* Posição atual para leitura (para parser) */
 } tabla_simbolos_t;
 
-/* ============================================================================
-   FUNÇÕES DE UTILIDADE PARA TOKENS
-   ============================================================================ */
-
-/* Criar e inicializar tabela de símbolos */
 tabla_simbolos_t* criar_tabla_simbolos(int capacidade_inicial);
 
-/* Adicionar token à tabela */
 void adicionar_token(tabla_simbolos_t *ts, token_t t);
 
-/* Reconhecer tipo de preprocessor */
 int identificar_preprocessor(const char *lexema);
 
-/* Liberar memória da tabela */
 void liberar_tabla_simbolos(tabla_simbolos_t *ts);
 
-/* Imprimir tabela de símbolos (debug) */
-void imprimir_tabla_simbolos(tabla_simbolos_t *ts);
+void imprimir_tabla_simbolos(tabla_simbolos_t *ts); //debug
 
-/* Converter tipo de token para string (para debug) */
 const char* tipo_token_para_string(int tipo);
 
-#endif /* TOKENS_H */
+#endif 

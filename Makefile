@@ -13,7 +13,7 @@
 # ============================================================================
 
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99 -I.
+CFLAGS = -Wall -Wextra -Werror -std=c99 -I.
 DEBUG_FLAGS = -g -O0 -DDEBUG
 RELEASE_FLAGS = -O2
 
