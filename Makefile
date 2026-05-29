@@ -20,8 +20,25 @@ CFLAGS = -Wall -Wextra -Werror -std=c99 -I.
 DEBUG_FLAGS = -g -O0 -DDEBUG
 RELEASE_FLAGS = -O2
 
+# ----------------------------------------------------------------------------
+# Build isolation (Windows/MinGW vs WSL/Linux)
+#
+# Evita misturar objetos do MinGW (COFF/PE) com o linker do Linux (ELF) quando
+# se roda `wsl make` depois de compilar no Windows (ou vice-versa).
+# ----------------------------------------------------------------------------
+ifeq ($(OS),Windows_NT)
+  OBJDIR ?= build/win
+else
+  ifdef WSL_DISTRO_NAME
+    OBJDIR ?= build/wsl
+  else
+    OBJDIR ?= build/linux
+  endif
+endif
+
 # Arquivo executável
 TARGET = compilador
+TARGET_PATH = $(OBJDIR)/$(TARGET)
 
 # Arquivos-fonte do Lexer (Fase 1)
 LEXER_SOURCES = src/lexer/lexer.c \
@@ -35,16 +52,19 @@ LEXER_SOURCES = src/lexer/lexer.c \
 # Arquivos-fonte do Parser (Fase 2)
 PARSER_SOURCES = src/parser/parser.c \
                  src/parser/ast.c \
-                 src/parser/scope.c
+                 src/parser/scope.c \
+                 src/parser/parser_expr.c \
+                 src/parser/parser_stmt.c \
+				 src/parser/parser_decl.c \
+				 src/parser/parser_error.c \
 
 # Utilitários
-UTILS_SOURCES = utils/printer.c
+# UTILS_SOURCES = utils/printer.c
 
 # Todos os arquivos-fonte
 SOURCES = main.c \
           $(LEXER_SOURCES) \
-          $(PARSER_SOURCES) \
-          $(UTILS_SOURCES)
+          $(PARSER_SOURCES)
 
 # Headers
 LEXER_HEADERS = src/lexer/lexer.h src/lexer/tokens.h src/lexer/keywords.h
@@ -53,7 +73,7 @@ UTILS_HEADERS = utils/printer.h
 HEADERS = $(LEXER_HEADERS) $(PARSER_HEADERS) $(UTILS_HEADERS)
 
 # Arquivos-objeto
-OBJECTS = $(SOURCES:.c=.o)
+OBJECTS = $(addprefix $(OBJDIR)/,$(SOURCES:.c=.o))
 
 # Arquivo de teste
 TESTE_ENTRADA = teste_entrada.c
@@ -63,15 +83,16 @@ TESTE_SAIDA = tabela_simbolos.txt
 # REGRAS PRINCIPAIS
 # ============================================================================
 
-all: $(TARGET)
+all: $(TARGET_PATH)
 
-$(TARGET): $(OBJECTS)
+$(TARGET_PATH): $(OBJECTS)
 	@echo "Linkando $(TARGET)..."
-	$(CC) $(CFLAGS) $(RELEASE_FLAGS) -o $(TARGET) $(OBJECTS)
-	@echo "OK: Executavel criado: $(TARGET)"
+	$(CC) $(CFLAGS) $(RELEASE_FLAGS) -o $(TARGET_PATH) $(OBJECTS)
+	@echo "OK: Executavel criado: $(TARGET_PATH)"
 
-%.o: %.c $(HEADERS)
+$(OBJDIR)/%.o: %.c $(HEADERS)
 	@echo "Compilando $<..."
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(RELEASE_FLAGS) -c $< -o $@
 
 # ============================================================================
@@ -80,17 +101,17 @@ $(TARGET): $(OBJECTS)
 
 clean:
 	@echo "Limpando arquivos compilados..."
-	rm -f $(OBJECTS) $(TARGET) $(TESTE_SAIDA)
+	rm -f $(OBJECTS) $(TARGET_PATH) $(TESTE_SAIDA)
 	@echo "OK: Limpeza concluida"
 
 debug: CFLAGS += $(DEBUG_FLAGS)
-debug: clean $(TARGET)
+debug: clean $(TARGET_PATH)
 	@echo "OK: Build de debug concluido"
 
-run: $(TARGET)
+run: $(TARGET_PATH)
 	@echo "Executando analisador lexico com teste..."
 	@echo "-------------------------------------------"
-	./$(TARGET) $(TESTE_ENTRADA)
+	./$(TARGET_PATH) $(TESTE_ENTRADA)
 	@echo "-------------------------------------------"
 	@echo "\nResultado salvo em: $(TESTE_SAIDA)"
 	@echo "Conteudo da tabela:"
@@ -112,10 +133,10 @@ help:
 	@echo "  Fase 2: Análise Sintática (Parser) 🚧 Em Desenvolvimento"
 	@echo ""
 	@echo "Arquivos gerados:"
-	@echo "  $(TARGET)     - Executável do compilador"
+	@echo "  $(TARGET_PATH)     - Executável do compilador"
 	@echo "  $(TESTE_SAIDA) - Saída da análise"
 
-parser: $(PARSER_SOURCES:.c=.o)
+parser: $(addprefix $(OBJDIR)/,$(PARSER_SOURCES:.c=.o))
 	@echo "OK: Parser compilado com sucesso"
 
 .PHONY: all clean debug run help parser

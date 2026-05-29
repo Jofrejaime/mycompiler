@@ -145,7 +145,7 @@ const char* tipo_token_para_string(int tipo) {
         case OP_ARROW:      return "OP_ARROW (->)";
         
         /* Símbolos especiais */
-        case SYM_LPAREN:    return "SYM_LPAREN ())";
+        case SYM_LPAREN:    return "SYM_LPAREN (()";
         case SYM_RPAREN:    return "SYM_RPAREN ())";
         case SYM_LBRACE:    return "SYM_LBRACE ({)";
         case SYM_RBRACE:    return "SYM_RBRACE (})";

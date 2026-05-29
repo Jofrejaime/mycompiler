@@ -73,7 +73,7 @@ Esta gramática usa os tokens definidos em `TABELA_TOKENS_LEXEMA.md`:
                        | KW_DOUBLE
                        | KW_STRUCT <nome_ou_corpo_struct>
                        | KW_UNION <nome_ou_corpo_struct>
-                       | TK_ID
+                       | TK_ID   (*apenas se for um nome de typedef previamente declarado*)
 
 <nome_ou_corpo_struct> ::= TK_ID <corpo_campos_opcional>
                          | <corpo_campos>
