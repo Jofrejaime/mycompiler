@@ -38,7 +38,7 @@ endif
 
 # Arquivo executável
 TARGET = compilador
-TARGET_PATH = $(OBJDIR)/$(TARGET)
+TARGET_PATH = $(TARGET)
 
 # Arquivos-fonte do Lexer (Fase 1)
 LEXER_SOURCES = src/lexer/lexer.c \
