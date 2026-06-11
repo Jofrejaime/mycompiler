@@ -101,7 +101,7 @@ $(OBJDIR)/%.o: %.c $(HEADERS)
 
 clean:
 	@echo "Limpando arquivos compilados..."
-	rm -f $(OBJECTS) $(TARGET_PATH) $(TESTE_SAIDA)
+	rm -r ./build
 	@echo "OK: Limpeza concluida"
 
 debug: CFLAGS += $(DEBUG_FLAGS)

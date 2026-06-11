@@ -1,0 +1,253 @@
+
+<programa> ::= <lista_declaracoes_globais> TK_EOF
+
+<lista_declaracoes_globais> ::= <declaracao_global> <lista_declaracoes_globais>
+                              | ε
+
+<declaracao_global> ::= <diretiva_preprocessador>
+                      | <declaracao_typedef>
+                      | <declaracao_geral>
+
+<diretiva_preprocessador> ::= TK_PP_INCLUDE
+                            | TK_PP_DEFINE
+                            | TK_PP_IFDEF
+                            | TK_PP_IFNDEF
+                            | TK_PP_ENDIF
+                            | TK_PP_PRAGMA
+                            | TK_PP_OTHER
+
+<especificador_tipo> ::= KW_INT
+                       | KW_CHAR
+                       | KW_FLOAT
+                       | KW_VOID
+                       | KW_DOUBLE
+                       | KW_STRUCT <nome_ou_corpo_struct>
+                       | KW_UNION <nome_ou_corpo_struct>
+                       | TK_ID
+
+<nome_ou_corpo_struct> ::= TK_ID <corpo_campos_opcional>
+                         | <corpo_campos>
+
+<corpo_campos_opcional> ::= <corpo_campos>
+                          | ε
+
+<corpo_campos> ::= SYM_LBRACE <lista_campos> SYM_RBRACE
+
+<lista_campos> ::= <campo> <resto_lista_campos>
+
+<resto_lista_campos> ::= <lista_campos>
+                       | ε
+
+<campo> ::= <especificador_tipo> <lista_declaradores_campo> SYM_SEMICOLON
+
+<lista_declaradores_campo> ::= <asteriscos> TK_ID <sufixo_array_opcional> <mais_declaradores_campo>
+
+<mais_declaradores_campo> ::= SYM_COMMA <asteriscos> TK_ID <sufixo_array_opcional> <mais_declaradores_campo>
+                            | ε
+
+<declaracao_typedef> ::= KW_TYPEDEF <especificador_tipo> <asteriscos> TK_ID <sufixo_array_opcional> SYM_SEMICOLON
+
+<declaracao_geral> ::= <especificador_tipo> <resto_declaracao_geral>
+
+<resto_declaracao_geral> ::= SYM_SEMICOLON
+                           | <asteriscos> TK_ID <cauda_declaracao_geral>
+
+<cauda_declaracao_geral> ::= SYM_LPAREN <parametros_opcionais> SYM_RPAREN <bloco>
+                           | <sufixo_array_opcional> <inicializacao_opcional> <mais_declaradores> SYM_SEMICOLON
+
+<asteriscos> ::= OP_MULT <asteriscos>
+               | ε
+
+<sufixo_array_opcional> ::= SYM_LBRACKET <expressao> SYM_RBRACKET <sufixo_array_opcional>
+                          | ε
+
+<inicializacao_opcional> ::= OP_ASSIGN <expressao>
+                           | ε
+
+<mais_declaradores> ::= SYM_COMMA <asteriscos> TK_ID <sufixo_array_opcional> <inicializacao_opcional> <mais_declaradores>
+                      | ε
+
+<parametros_opcionais> ::= KW_VOID
+                         | <lista_parametros>
+                         | ε
+
+<lista_parametros> ::= <parametro> <mais_parametros>
+
+<mais_parametros> ::= SYM_COMMA <parametro> <mais_parametros>
+                    | ε
+
+<parametro> ::= <especificador_tipo> <resto_parametro>
+
+<resto_parametro> ::= <asteriscos> TK_ID <sufixo_array_opcional>
+                    | ε
+
+<bloco> ::= SYM_LBRACE <lista_itens_bloco> SYM_RBRACE
+
+<lista_itens_bloco> ::= <item_bloco> <lista_itens_bloco>
+                      | ε
+
+<item_bloco> ::= <declaracao_variavel_local>
+               | <instrucao>
+
+<declaracao_variavel_local> ::= <especificador_tipo> <asteriscos> TK_ID <sufixo_array_opcional> <inicializacao_opcional> <mais_declaradores> SYM_SEMICOLON
+
+<instrucao> ::= <instrucao_expressao>
+              | <instrucao_if>
+              | <instrucao_while>
+              | <instrucao_for>
+              | <instrucao_do>
+              | <instrucao_switch>
+              | <instrucao_break>
+              | <instrucao_continue>
+              | <instrucao_return>
+              | <instrucao_goto>
+              | <bloco>
+              | SYM_SEMICOLON
+
+<instrucao_expressao> ::= <expressao> SYM_SEMICOLON
+
+<instrucao_if> ::= KW_IF SYM_LPAREN <expressao> SYM_RPAREN <instrucao> <ramo_else_opcional>
+
+<ramo_else_opcional> ::= KW_ELSE <instrucao>
+                       | ε
+
+<instrucao_while> ::= KW_WHILE SYM_LPAREN <expressao> SYM_RPAREN <instrucao>
+
+<instrucao_do> ::= KW_DO <instrucao> KW_WHILE SYM_LPAREN <expressao> SYM_RPAREN SYM_SEMICOLON
+
+<instrucao_for> ::= KW_FOR SYM_LPAREN <expressao_opcional> SYM_SEMICOLON <expressao_opcional> SYM_SEMICOLON <expressao_opcional> SYM_RPAREN <instrucao>
+
+<instrucao_switch> ::= KW_SWITCH SYM_LPAREN <expressao> SYM_RPAREN SYM_LBRACE <lista_casos> SYM_RBRACE
+
+<lista_casos> ::= <caso> <lista_casos>
+                | ε
+
+<caso> ::= KW_CASE <expressao> SYM_COLON <lista_itens_bloco>
+         | KW_DEFAULT SYM_COLON <lista_itens_bloco>
+
+<instrucao_break> ::= KW_BREAK SYM_SEMICOLON
+
+<instrucao_continue> ::= KW_CONTINUE SYM_SEMICOLON
+
+<instrucao_return> ::= KW_RETURN <expressao_opcional> SYM_SEMICOLON
+
+<instrucao_goto> ::= KW_GOTO TK_ID SYM_SEMICOLON
+
+<expressao_opcional> ::= <expressao>
+                       | ε
+
+<expressao> ::= <atribuicao>
+
+<atribuicao> ::= <ternario> <atribuicao_r>
+
+<atribuicao_r> ::= OP_ASSIGN <atribuicao>
+                 | OP_PLUS_ASSIGN <atribuicao>
+                 | OP_MINUS_ASSIGN <atribuicao>
+                 | OP_MULT_ASSIGN <atribuicao>
+                 | OP_DIV_ASSIGN <atribuicao>
+                 | OP_AND_ASSIGN <atribuicao>
+                 | OP_OR_ASSIGN <atribuicao>
+                 | OP_XOR_ASSIGN <atribuicao>
+                 | ε
+
+<ternario> ::= <logico_ou> <ternario_r>
+
+<ternario_r> ::= SYM_TERNARY <expressao> SYM_COLON <ternario>
+               | ε
+
+<logico_ou> ::= <logico_e> <logico_ou_r>
+
+<logico_ou_r> ::= OP_OR <logico_e> <logico_ou_r>
+                | ε
+
+<logico_e> ::= <bitor> <logico_e_r>
+
+<logico_e_r> ::= OP_AND <bitor> <logico_e_r>
+               | ε
+
+<bitor> ::= <bitxor> <bitor_r>
+
+<bitor_r> ::= OP_BITOR <bitxor> <bitor_r>
+            | ε
+
+<bitxor> ::= <bitand> <bitxor_r>
+
+<bitxor_r> ::= OP_BITXOR <bitand> <bitxor_r>
+             | ε
+
+<bitand> ::= <igualdade> <bitand_r>
+
+<bitand_r> ::= OP_BITAND <igualdade> <bitand_r>
+             | ε
+
+<igualdade> ::= <relacional> <igualdade_r>
+
+<igualdade_r> ::= OP_EQ <relacional> <igualdade_r>
+                | OP_NE <relacional> <igualdade_r>
+                | ε
+
+<relacional> ::= <shift> <relacional_r>
+
+<relacional_r> ::= OP_LT <shift> <relacional_r>
+                 | OP_GT <shift> <relacional_r>
+                 | OP_LE <shift> <relacional_r>
+                 | OP_GE <shift> <relacional_r>
+                 | ε
+
+<shift> ::= <aditivo> <shift_r>
+
+<shift_r> ::= OP_LSHIFT <aditivo> <shift_r>
+            | OP_RSHIFT <aditivo> <shift_r>
+            | ε
+
+<aditivo> ::= <multiplicativo> <aditivo_r>
+
+<aditivo_r> ::= OP_PLUS <multiplicativo> <aditivo_r>
+              | OP_MINUS <multiplicativo> <aditivo_r>
+              | ε
+
+<multiplicativo> ::= <unario> <multiplicativo_r>
+
+<multiplicativo_r> ::= OP_MULT <unario> <multiplicativo_r>
+                     | OP_DIV <unario> <multiplicativo_r>
+                     | OP_MOD <unario> <multiplicativo_r>
+                     | ε
+
+<unario> ::= OP_INC <unario>
+           | OP_DEC <unario>
+           | OP_NOT <unario>
+           | OP_BITNOT <unario>
+           | OP_MINUS <unario>
+           | OP_PLUS <unario>
+           | OP_BITAND <unario>
+           | OP_MULT <unario>
+           | KW_SIZEOF <unario_sizeof>
+           | <pos_fixo>
+
+<unario_sizeof> ::= SYM_LPAREN <especificador_tipo> SYM_RPAREN
+                  | <unario>
+
+<pos_fixo> ::= <primario> <pos_fixo_r>
+
+<pos_fixo_r> ::= SYM_LBRACKET <expressao> SYM_RBRACKET <pos_fixo_r>
+               | SYM_DOT TK_ID <pos_fixo_r>
+               | SYM_LPAREN <argumentos_opcionais> SYM_RPAREN <pos_fixo_r>
+               | OP_INC <pos_fixo_r>
+               | OP_DEC <pos_fixo_r>
+               | ε
+
+<primario> ::= TK_ID
+             | TK_NUM_INT
+             | TK_NUM_FLOAT
+             | TK_NUM_EXP
+             | TK_CHAR
+             | TK_STRING
+             | SYM_LPAREN <expressao> SYM_RPAREN
+
+<argumentos_opcionais> ::= <lista_argumentos>
+                         | ε
+
+<lista_argumentos> ::= <expressao> <mais_argumentos>
+
+<mais_argumentos> ::= SYM_COMMA <expressao> <mais_argumentos>
+                    | ε

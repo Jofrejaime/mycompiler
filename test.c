@@ -9,7 +9,7 @@ typedef struct test
 } test;
 
 int main() {
-	int a 
+	int a;
 	int b = 2;
 	int c = 0;
 	int d[3] = {0};

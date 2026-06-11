@@ -19,7 +19,6 @@
 
 analisador_lexico
 analisador_lexico.exe
-parser
 parser.exe
 
 # ============================================================================
