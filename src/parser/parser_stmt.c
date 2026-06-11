@@ -449,75 +449,100 @@ ast_node_t* parse_instrucao(parser_t *parser) {
    ============================================================================ */
 
 /*
-   DeclaracaoLocal → EspecificadorTipo TK_ID (SYM_LBRACKET TK_NUM_INT SYM_RBRACKET)* 
-                     (OP_ASSIGN Expressao)? SYM_SEMICOLON
+   DeclaracaoLocal → EspecificadorTipo Declarator (SYM_COMMA Declarator)* SYM_SEMICOLON
+   Declarator → TK_ID (SYM_LBRACKET TK_NUM_INT SYM_RBRACKET)* (OP_ASSIGN Expressao)?
 */
 ast_node_t* parse_declaracao_local(parser_t *parser) {
     int data_type = parse_especificador_tipo(parser);
-    int pointer_level = parse_asteriscos(parser);
-    
-    token_t id_token = peek_token(parser);
-    expect(parser, TK_ID);  // Consume identifier
-    
-    ast_node_t *var_decl = create_ast_node(AST_VAR_DECL, id_token.lexeme, 
-                                           id_token.linha, id_token.coluna);
-    var_decl->data_type = data_type;
-    var_decl->operator_type = pointer_level;
-    
-    /* Check for array dimensions */
-    int dimensions[8];
-    int dim_count = parse_sufixo_array(parser, dimensions);
-    int is_array = (dim_count > 0);
-    
-    /* Optional initialization */
-    if (match(parser, OP_ASSIGN)) {
-        consume_token(parser);  // Consume '='
-        ast_node_t *init_expr = parse_inicializacao(parser);
-        add_ast_child(var_decl, init_expr);
-    }
-    
+
+    ast_node_t *first_decl = NULL;  /* First VAR_DECL node (returned when only one declarator) */
+    ast_node_t *wrapper    = NULL;  /* AST_BLOCK wrapper, only created when > 1 declarator */
+    int decl_count = 0;
+
+    do {
+        /* Each declarator may have its own pointer stars: int *x, y; */
+        int pointer_level = parse_asteriscos(parser);
+
+        token_t id_token = peek_token(parser);
+        expect(parser, TK_ID);  // Consume identifier
+
+        ast_node_t *var_decl = create_ast_node(AST_VAR_DECL, id_token.lexeme,
+                                               id_token.linha, id_token.coluna);
+        var_decl->data_type    = data_type;
+        var_decl->operator_type = pointer_level;
+
+        /* Array dimensions per declarator */
+        int dimensions[8];
+        int dim_count = parse_sufixo_array(parser, dimensions);
+        int is_array  = (dim_count > 0);
+
+        var_decl->data.decl.array_dim_count = dim_count;
+        for (int i = 0; i < dim_count; i++)
+            var_decl->data.decl.array_dimensions[i] = dimensions[i];
+
+        /* Optional initializer */
+        if (match(parser, OP_ASSIGN)) {
+            consume_token(parser);  // Consume '='
+            ast_node_t *init_expr = parse_inicializacao(parser);
+            add_ast_child(var_decl, init_expr);
+        }
+
+        /* Symbol table registration */
+        symbol_info_t *info = (symbol_info_t*)calloc(1, sizeof(symbol_info_t));
+        info->data_type     = data_type;
+        info->is_pointer    = pointer_level;
+        info->kind          = SYMBOL_VARIABLE;
+        info->variable_type = VAR_LOCAL;
+        info->scope_id      = parser->current_local_table
+                                  ? parser->current_local_table->scope_id : 0;
+        info->is_array      = is_array;
+        info->array_dim_count = dim_count;
+        for (int i = 0; i < dim_count; i++)
+            info->array_dimensions[i] = dimensions[i];
+
+        /* Size calculation */
+        int element_size = (data_type == KW_CHAR)   ? 1 :
+                           (data_type == KW_DOUBLE)  ? 8 : 4;
+        if (pointer_level > 0) element_size = 8;
+        int total_size = element_size;
+        for (int i = 0; i < dim_count; i++)
+            if (dimensions[i] > 0) total_size *= dimensions[i];
+        info->size_bytes = total_size;
+
+        if (parser->current_local_table) {
+            info->memory_address = scope_allocate_memory(parser->current_local_table, total_size);
+            add_local_symbol(parser, id_token.lexeme, info);
+            enrich_symbol_type(parser, id_token.lexeme, data_type, pointer_level);
+            enrich_symbol_scope(parser, id_token.lexeme, info->scope_id, VAR_LOCAL);
+            enrich_symbol_memory(parser, id_token.lexeme, info->memory_address, total_size);
+            if (is_array)
+                enrich_symbol_array(parser, id_token.lexeme, dimensions, dim_count);
+        }
+
+        /* Accumulate nodes */
+        if (decl_count == 0) {
+            first_decl = var_decl;
+        } else {
+            if (decl_count == 1) {
+                /* Promote to wrapper block on second declarator */
+                wrapper = create_ast_node(AST_BLOCK, NULL,
+                                          first_decl->line, first_decl->column);
+                add_ast_child(wrapper, first_decl);
+            }
+            add_ast_child(wrapper, var_decl);
+        }
+        decl_count++;
+
+        /* Continue if comma separates declarators */
+        if (match(parser, SYM_COMMA)) {
+            consume_token(parser);  // Consume ','
+        } else {
+            break;
+        }
+    } while (1);
+
     expect(parser, SYM_SEMICOLON);  // Consume ';'
-    
-    /* Add to local symbol table */
-    symbol_info_t *info = (symbol_info_t*)calloc(1, sizeof(symbol_info_t));
-    info->data_type = data_type;
-    info->is_pointer = pointer_level;
-    info->kind = SYMBOL_VARIABLE;
-    info->variable_type = VAR_LOCAL;
-    info->scope_id = parser->current_local_table ? parser->current_local_table->scope_id : 0;
-    info->is_array = is_array;
-    info->array_dim_count = dim_count;
-    for (int i = 0; i < dim_count; i++) {
-        info->array_dimensions[i] = dimensions[i];
-    } 
-    
-    /* Calculate size */
-    int element_size = 4;  /* Default: int/float = 4 bytes */
-    if (data_type == KW_CHAR) element_size = 1;
-    if (data_type == KW_DOUBLE) element_size = 8;
-    if (pointer_level > 0) element_size = 8;
-    
-    int total_size = element_size;
-    for (int i = 0; i < dim_count; i++) {
-        if (dimensions[i] > 0) {
-            total_size *= dimensions[i];
-        }
-    }
-    info->size_bytes = total_size;
-    
-    /* Allocate memory in current scope */
-    if (parser->current_local_table) {
-        info->memory_address = scope_allocate_memory(parser->current_local_table, total_size);
-        add_local_symbol(parser, id_token.lexeme, info);
-        enrich_symbol_type(parser, id_token.lexeme, data_type, pointer_level);
-        enrich_symbol_scope(parser, id_token.lexeme, info->scope_id, VAR_LOCAL);
-        enrich_symbol_memory(parser, id_token.lexeme, info->memory_address, total_size);
-        if (is_array) {
-            enrich_symbol_array(parser, id_token.lexeme, dimensions, dim_count);
-        }
-    }
-    
-    return var_decl;
+    return (wrapper != NULL) ? wrapper : first_decl;
 }
 
 /* ============================================================================

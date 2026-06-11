@@ -182,76 +182,92 @@ int is_type_specifier(parser_t *parser, token_t token) {
    ============================================================================ */
 
 /*
-   DeclaracaoVariavelGlobal → EspecificadorTipo [Asteriscos] TK_ID 
-                               (SYM_LBRACKET Expressao? SYM_RBRACKET)* 
-                               (OP_ASSIGN Expressao)? SYM_SEMICOLON
+   DeclaracaoVariavelGlobal → EspecificadorTipo Declarator (SYM_COMMA Declarator)* SYM_SEMICOLON
+   Declarator → [Asteriscos] TK_ID (SYM_LBRACKET Expressao? SYM_RBRACKET)* (OP_ASSIGN Expressao)?
 */
 ast_node_t* parse_declaracao_variavel_global(parser_t *parser) {
     int data_type = parse_especificador_tipo(parser);
-    
-    /* Parse pointer declarators */
-    int pointer_level = parse_asteriscos(parser);
-    
-    token_t id_token = peek_token(parser);
-    expect(parser, TK_ID);  // Consume identifier
-    
-    ast_node_t *var_decl = create_ast_node(AST_VAR_DECL, id_token.lexeme, 
-                                           id_token.linha, id_token.coluna);
-    var_decl->data_type = data_type;
-    var_decl->operator_type = pointer_level;  /* Store pointer level */
-    
-    /* Check for array dimensions */
-    int dimensions[8];
-    int dim_count = parse_sufixo_array(parser, dimensions);
-    for (int i = dim_count; i < 8; i++) dimensions[i] = 0;  /* Zero remaining */
-    int is_array = (dim_count > 0);
-    
-    /* Store array info in AST node */
-    var_decl->data.decl.array_dim_count = dim_count;
-    for (int i = 0; i < dim_count; i++) {
-        var_decl->data.decl.array_dimensions[i] = dimensions[i];
-    }
-    
-    /* Optional initialization */
-    if (match(parser, OP_ASSIGN)) {
-        consume_token(parser);  // Consume '='
-        ast_node_t *init_expr = parse_expressao(parser);
-        var_decl->data.decl.initializer = init_expr;
-    }
-    
+
+    ast_node_t *first_decl = NULL;  /* First VAR_DECL (returned directly when only one) */
+    ast_node_t *wrapper    = NULL;  /* AST_BLOCK wrapper, created on second declarator */
+    int decl_count = 0;
+
+    do {
+        /* Each declarator may have its own pointer stars: int *x, y; */
+        int pointer_level = parse_asteriscos(parser);
+
+        token_t id_token = peek_token(parser);
+        expect(parser, TK_ID);  // Consume identifier
+
+        ast_node_t *var_decl = create_ast_node(AST_VAR_DECL, id_token.lexeme,
+                                               id_token.linha, id_token.coluna);
+        var_decl->data_type    = data_type;
+        var_decl->operator_type = pointer_level;
+
+        /* Array dimensions per declarator */
+        int dimensions[8] = {0};
+        int dim_count = parse_sufixo_array(parser, dimensions);
+        int is_array  = (dim_count > 0);
+
+        var_decl->data.decl.array_dim_count = dim_count;
+        for (int i = 0; i < dim_count; i++)
+            var_decl->data.decl.array_dimensions[i] = dimensions[i];
+
+        /* Optional initializer */
+        if (match(parser, OP_ASSIGN)) {
+            consume_token(parser);  // Consume '='
+            ast_node_t *init_expr = parse_expressao(parser);
+            var_decl->data.decl.initializer = init_expr;
+        }
+
+        /* Symbol table registration */
+        symbol_info_t *info = (symbol_info_t*)calloc(1, sizeof(symbol_info_t));
+        info->data_type     = data_type;
+        info->is_pointer    = pointer_level;
+        info->kind          = SYMBOL_VARIABLE;
+        info->variable_type = VAR_GLOBAL;
+        info->scope_id      = 0;
+        info->is_array      = is_array;
+        info->array_dim_count = dim_count;
+        for (int i = 0; i < dim_count; i++)
+            info->array_dimensions[i] = dimensions[i];
+
+        int total_size = calculate_total_size(data_type, pointer_level, dimensions, dim_count);
+        info->size_bytes = total_size;
+
+        info->memory_address = parser->next_global_address;
+        parser->next_global_address += total_size;
+
+        add_global_symbol(parser, id_token.lexeme, info);
+        enrich_symbol_type(parser, id_token.lexeme, data_type, pointer_level);
+        enrich_symbol_scope(parser, id_token.lexeme, 0, VAR_GLOBAL);
+        enrich_symbol_memory(parser, id_token.lexeme, info->memory_address, total_size);
+        if (is_array)
+            enrich_symbol_array(parser, id_token.lexeme, dimensions, dim_count);
+
+        /* Accumulate nodes */
+        if (decl_count == 0) {
+            first_decl = var_decl;
+        } else {
+            if (decl_count == 1) {
+                wrapper = create_ast_node(AST_BLOCK, NULL,
+                                          first_decl->line, first_decl->column);
+                add_ast_child(wrapper, first_decl);
+            }
+            add_ast_child(wrapper, var_decl);
+        }
+        decl_count++;
+
+        /* Continue if comma separates declarators */
+        if (match(parser, SYM_COMMA)) {
+            consume_token(parser);  // Consume ','
+        } else {
+            break;
+        }
+    } while (1);
+
     expect(parser, SYM_SEMICOLON);  // Consume ';'
-    
-    /* Add to global symbol table */
-    symbol_info_t *info = (symbol_info_t*)calloc(1, sizeof(symbol_info_t));
-    info->data_type = data_type;
-    info->is_pointer = pointer_level;
-    info->kind = SYMBOL_VARIABLE;
-    info->variable_type = VAR_GLOBAL;
-    info->scope_id = 0;  /* Global scope */
-    info->is_array = is_array;
-    info->array_dim_count = dim_count;
-    for (int i = 0; i < dim_count; i++) {
-        info->array_dimensions[i] = dimensions[i];
-    }
-    
-    /* Calculate size using helper function (agora com arrays corretos) */
-    int total_size = calculate_total_size(data_type, pointer_level, dimensions, dim_count);
-    info->size_bytes = total_size;
-    
-    /* Allocate memory in global segment */
-    info->memory_address = parser->next_global_address;
-    parser->next_global_address += total_size;
-    
-    add_global_symbol(parser, id_token.lexeme, info);
-
-    enrich_symbol_type(parser, id_token.lexeme, data_type, pointer_level);
-    enrich_symbol_scope(parser, id_token.lexeme, 0, VAR_GLOBAL);
-    enrich_symbol_memory(parser, id_token.lexeme, info->memory_address, total_size);
-    if (is_array) {
-        enrich_symbol_array(parser, id_token.lexeme, dimensions, dim_count);
-    }
-
-    return var_decl;
+    return (wrapper != NULL) ? wrapper : first_decl;
 }
 
     /* ============================================================================
