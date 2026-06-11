@@ -374,13 +374,13 @@ ast_node_t* parse_bitand_r(parser_t *parser, ast_node_t *left) {
     token_t token = peek_token(parser);
 
     if (token.tipo == OP_BITAND) {
-        consume_token(parser);
+        consume_token(parser); 
         ast_node_t *right = parse_igualdade(parser);
         ast_node_t *binary = create_binary_op_node(token.tipo, left, right, token.linha, token.coluna);
         return parse_bitand_r(parser, binary);
     }
 
-    return left;  // ε
+    return left;
 }
 
 ast_node_t* parse_bitand(parser_t *parser) {

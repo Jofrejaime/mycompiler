@@ -31,19 +31,16 @@ void parse_lista_instrucoes_declaracoes(parser_t *parser, ast_node_t *parent);
 */
 ast_node_t* parse_bloco(parser_t *parser) {
     token_t token = peek_token(parser);
-    expect(parser, SYM_LBRACE);  // Consume '{'
+    expect(parser, SYM_LBRACE);  // }
     
     ast_node_t *block = create_ast_node(AST_BLOCK, NULL, token.linha, token.coluna);
-    
-    /* Enter new scope for block */
+
     enter_local_scope(parser);
     
-    /* Parse declarations and statements until '}' */
     parse_lista_instrucoes_declaracoes(parser, block);
     
-    expect(parser, SYM_RBRACE);  // Consume '}'
-    
-    /* Exit block scope */
+    expect(parser, SYM_RBRACE); //}
+
     exit_local_scope(parser);
     
     return block;
@@ -59,11 +56,11 @@ ast_node_t* parse_bloco(parser_t *parser) {
 */
 ast_node_t* parse_instrucao_if(parser_t *parser) {
     token_t token = peek_token(parser);
-    expect(parser, KW_IF);  // Consume 'if'
+    expect(parser, KW_IF);  
     
-    expect(parser, SYM_LPAREN);  // Consume '('
+    expect(parser, SYM_LPAREN);  // '('
     ast_node_t *condition = parse_expressao(parser);
-    expect(parser, SYM_RPAREN);  // Consume ')'
+    expect(parser, SYM_RPAREN);  // ')'
     
     ast_node_t *then_stmt = parse_instrucao(parser);
     
