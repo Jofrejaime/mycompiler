@@ -207,9 +207,47 @@ ast_node_t* parse_unario(parser_t *parser) {
         }
         
         case KW_SIZEOF: {
-            consume_token(parser);
-            ast_node_t *operand = parse_unario(parser);
-            return create_unary_op_node(KW_SIZEOF, operand, token.linha, token.coluna);
+            consume_token(parser);  /* Consume 'sizeof' */
+
+            /*
+             * Disambiguate sizeof(type) from sizeof(expr):
+             *   sizeof '(' type_specifier ...')' → AST_SIZEOF with type info
+             *   sizeof expr                     → AST_SIZEOF wrapping an expr
+             */
+            if (match(parser, SYM_LPAREN)) {
+                /* Look one token ahead inside the '(' */
+                int save_pos = parser->current_position;
+                consume_token(parser);  /* consume '(' */
+                token_t inner = peek_token(parser);
+
+                if (is_type_specifier(parser, inner)) {
+                    /* sizeof ( type ) */
+                    int sz_type = parse_especificador_tipo(parser);
+                    int sz_ptr  = parse_asteriscos(parser);
+                    expect(parser, SYM_RPAREN);
+
+                    ast_node_t *sz_node = create_ast_node(
+                        AST_UNARY_OP, NULL, token.linha, token.coluna);
+                    sz_node->operator_type = KW_SIZEOF;
+                    sz_node->data_type     = sz_type;
+                    sz_node->data.expr.operator = KW_SIZEOF;
+                    /* Store pointer level in literal_type field */
+                    sz_node->literal_type  = sz_ptr;
+                    /* No child: it's a type operand, not an expression */
+                    return sz_node;
+                } else {
+                    /* sizeof ( expr ) — restore and fall through to expr path */
+                    parser->current_position = save_pos;
+                    ast_node_t *operand = parse_unario(parser);
+                    return create_unary_op_node(KW_SIZEOF, operand,
+                                                token.linha, token.coluna);
+                }
+            } else {
+                /* sizeof expr (no parentheses) */
+                ast_node_t *operand = parse_unario(parser);
+                return create_unary_op_node(KW_SIZEOF, operand,
+                                            token.linha, token.coluna);
+            }
         }
         
         default:

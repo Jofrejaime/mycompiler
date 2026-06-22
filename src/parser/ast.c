@@ -51,13 +51,15 @@ ast_node_t* create_ast_node(node_type_t type, const void *meta, int line, int co
 }
 
 void add_ast_child(ast_node_t *parent, ast_node_t *child) {
-    if (!parent || !child) return;
+    if (!parent) return;
+    /* NULL children are allowed to preserve fixed-slot semantics
+       (e.g. AST_FOR_STMT slots 0-3 must always exist). */
 
-    /* realloc to hold one more child */
-    ast_node_t **new_children = (ast_node_t**)realloc(parent->children, sizeof(ast_node_t*) * (parent->child_count + 1));
+    ast_node_t **new_children = (ast_node_t**)realloc(parent->children,
+        sizeof(ast_node_t*) * (parent->child_count + 1));
     if (!new_children) return;
     parent->children = new_children;
-    parent->children[parent->child_count++] = child;
+    parent->children[parent->child_count++] = child;  /* child may be NULL */
 }
 
 ast_node_t* create_binary_op_node(int operator, ast_node_t *left, ast_node_t *right, int line, int column) {
@@ -92,7 +94,9 @@ ast_node_t* create_literal_node(int literal_type, const char *value, int line, i
 void free_ast(ast_node_t *node) {
     if (!node) return;
 
-    for (int i = 0; i < node->child_count; i++) free_ast(node->children[i]);
+    for (int i = 0; i < node->child_count; i++) {
+        if (node->children[i]) free_ast(node->children[i]);
+    }
     free(node->children);
 
     switch (node->type) {
@@ -255,7 +259,13 @@ void print_ast(ast_node_t *node, int indent) {
         case NODE_BINARY_OP:
         case NODE_UNARY_OP:
         case NODE_ASSIGN:
-            printf(" (op=%d)", node->data.expr.operator);
+            if (node->data.expr.operator == KW_SIZEOF && node->child_count == 0) {
+                /* sizeof(type) — no child, type stored in data_type */
+                printf(" (sizeof type=%s ptr=%d)",
+                       data_type_to_string(node->data_type), node->literal_type);
+            } else {
+                printf(" (op=%d)", node->data.expr.operator);
+            }
             break;
         default:
             break;
@@ -263,7 +273,14 @@ void print_ast(ast_node_t *node, int indent) {
 
     printf(" [%d:%d]\n", node->line, node->column);
 
-    for (int i = 0; i < node->child_count; i++) print_ast(node->children[i], indent + 1);
+    for (int i = 0; i < node->child_count; i++) {
+        if (node->children[i]) print_ast(node->children[i], indent + 1);
+        else {
+            /* NULL slot (e.g. omitted for/init/cond/inc) */
+            for (int j = 0; j < indent + 1; j++) printf("  ");
+            printf("(null)\n");
+        }
+    }
 
     switch (node->type) {
         case NODE_VAR_DECL:

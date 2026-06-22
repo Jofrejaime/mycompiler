@@ -1,3 +1,4 @@
+int DEBUG_TOKEN_INDEX = 0;
 #include "parser.h"
 #include <stdlib.h>
 #include <string.h>
@@ -119,6 +120,7 @@ int parser_run(parser_t *parser) {
    ============================================================================ */
 
 token_t peek_token(parser_t *parser) {
+    // DEBUG_TOKEN_INDEX++;
     if (parser->current_position >= parser->token_stream->quantidade) {
         token_t eof_token;
         eof_token.tipo = TK_EOF;

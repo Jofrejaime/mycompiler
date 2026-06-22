@@ -4,12 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define ANSI_RED "\x1b[31m"
-#define ANSI_RESET "\x1b[0m"
+#define ANSI_RED     "\x1b[31m"
+#define ANSI_BOLD    "\x1b[1m"
+#define ANSI_RESET   "\x1b[0m"
+#define ANSI_CYAN    "\x1b[36m"
 
-static int is_sync_token(int tipo) {
-    return (tipo == SYM_SEMICOLON || tipo == SYM_RBRACE || tipo == TK_EOF);
-}
 
 static int is_stmt_start_token(int tipo) {
     switch (tipo) {
@@ -41,7 +40,8 @@ static int is_decl_start_token(int tipo) {
         case KW_FLOAT:
         case KW_DOUBLE:
         case KW_VOID:
-        case TK_ID: /* typedef-name (ou erro: ainda assim ajuda a re-sincronizar) */
+            /* Note: TK_ID intentionally excluded — it is too broad and causes
+               the synchronizer to stop on every identifier, generating cascades. */
             return 1;
         default:
             return 0;
@@ -53,45 +53,45 @@ void synchronize(parser_t *parser) {
         return;
     }
 
-    int start_pos = parser->current_position;
-
-    /* Fast paths for obvious boundaries */
+    /* Never consume past EOF or a closing brace — that belongs to the caller. */
     if (match(parser, TK_EOF) || match(parser, SYM_RBRACE)) {
         return;
     }
+
+    /* Already sitting on ';': consume it and we're done. */
     if (match(parser, SYM_SEMICOLON)) {
         consume_token(parser);
         return;
     }
 
     /*
-       Panic-mode: consume until we reach a boundary OR a plausible "restart point".
+       Panic-mode recovery:
+       Consume tokens until we hit a synchronisation point:
+         - '}' or EOF  → stop WITHOUT consuming (caller needs it)
+         - ';'         → consume it and stop
+         - start of a new statement/declaration keyword → stop, let caller retry
 
-       Restart points are tokens that can begin a statement or declaration, so the
-       caller can attempt to continue parsing from there.
-
-       Important: guarantee progress (consume at least one token when possible),
-       otherwise the parser can get stuck re-reporting the same error forever.
+       CRITICAL: always consume at least one token first so we cannot loop
+       forever on the token that triggered the error.
     */
-    while (!is_sync_token(peek_token(parser).tipo)) {
+    consume_token(parser);  /* guaranteed progress */
+
+    while (!match(parser, TK_EOF) && !match(parser, SYM_RBRACE)) {
         token_t t = peek_token(parser);
-        if (is_stmt_start_token(t.tipo) || is_decl_start_token(t.tipo)) {
-            break;
+
+        if (match(parser, SYM_SEMICOLON)) {
+            consume_token(parser);  /* consume ';' and land on next statement */
+            return;
         }
+
+        /* Stop before a keyword that starts a new statement or declaration */
+        if (is_stmt_start_token(t.tipo) || is_decl_start_token(t.tipo)) {
+            return;
+        }
+
         consume_token(parser);
     }
-
-    /* If we didn't move at all and we are not at EOF, consume one token. */
-    if (parser->current_position == start_pos && !match(parser, TK_EOF)) {
-        consume_token(parser);
-    }
-
-    /* If we stopped at ';', consume it to move past the broken statement. */
-    if (match(parser, SYM_SEMICOLON)) {
-        consume_token(parser);
-    }
-
-    /* If we stopped at '}', we don't consume it here; the caller may expect it. */
+    /* We stopped at '}' or EOF — leave it for the caller. */
 }
 
 static char *read_source_line(const char *path, int target_line) {
@@ -135,17 +135,31 @@ static void print_error_context(parser_t *parser, token_t found) {
     }
 
     int col = found.coluna;
-    if (col < 1) {
-        col = 1;
-    }
+    if (col < 1) col = 1;
 
+    /* Strip trailing newline/carriage-return */
     size_t line_len = strlen(line);
     while (line_len > 0 && (line[line_len - 1] == '\n' || line[line_len - 1] == '\r')) {
         line[--line_len] = '\0';
     }
 
-    fprintf(stderr, "%4d | %s%s%s\n", found.linha, ANSI_RED, line, ANSI_RESET);
-    fprintf(stderr, "     | %*s%s^%s\n", col - 1, "", ANSI_RED, ANSI_RESET);
+    /* Width of the line-number gutter (at least 4 chars wide) */
+    int gutter = (found.linha >= 1000) ? 5 :
+                 (found.linha >= 100)  ? 4 :
+                 (found.linha >= 10)   ? 3 : 2;
+    if (gutter < 4) gutter = 4;
+
+    /* Print the source line: "  13 | <line>" */
+    fprintf(stderr, "%*d | %s\n", gutter, found.linha, line);
+
+    /* Print the caret line: "     |    ^"                          */
+    /* Tabs in the source line must be replicated as spaces so that  */
+    /* the caret lands on the right column.                          */
+    fprintf(stderr, "%*s | ", gutter, "");
+    for (int i = 0; i < col - 1 && line[i] != '\0'; i++) {
+        fputc(line[i] == '\t' ? '\t' : ' ', stderr);
+    }
+    fprintf(stderr, "%s^%s\n", ANSI_RED ANSI_BOLD, ANSI_RESET);
 
     free(line);
 }
@@ -156,26 +170,35 @@ void syntax_error(parser_t *parser, const char *message, int expected_type, toke
     }
 
     parser->error_count++;
+
+    /* Do not print cascading errors: if we are already in panic mode, just
+       increment the counter and return — recovery is already in progress. */
+    if (parser->panic_mode) {
+        return;
+    }
     parser->panic_mode = 1;
 
-    const char *found_name = tipo_token_para_string(found.tipo);
-    const char *expected_name = NULL;
-    if (expected_type > 0) {
-        expected_name = tipo_token_para_string(expected_type);
-    }
+    const char *found_name    = tipo_token_para_string(found.tipo);
+    const char *expected_name = (expected_type > 0) ? tipo_token_para_string(expected_type) : NULL;
 
-    /* Format: file:line:col: error: message */
-    fprintf(stderr, "\n");
+    /* GCC-style header: file:line:col: error: message */
+    const char *path = parser->source_path ? parser->source_path : "<unknown>";
+
     if (expected_name) {
-        fprintf(stderr, "[%d:%d] erro sintatico: %s. Esperado '%s', encontrado '%s'\n",
-                found.linha, found.coluna, message, expected_name, found_name);
+        fprintf(stderr,
+                "%s%s:%d:%d:%s %serror:%s %s; expected '%s' before '%s'\n",
+                ANSI_BOLD, path, found.linha, found.coluna, ANSI_RESET,
+                ANSI_RED ANSI_BOLD, ANSI_RESET,
+                message, expected_name, found_name);
     } else {
-        fprintf(stderr, "[%d:%d] erro sintatico: %s. Encontrado '%s'\n",
-                found.linha, found.coluna, message, found_name);
+        fprintf(stderr,
+                "%s%s:%d:%d:%s %serror:%s %s; got '%s'\n",
+                ANSI_BOLD, path, found.linha, found.coluna, ANSI_RESET,
+                ANSI_RED ANSI_BOLD, ANSI_RESET,
+                message, found_name);
     }
 
     print_error_context(parser, found);
-    fprintf(stderr, "\n");
 
     /* Basic panic-mode recovery: skip to statement boundary */
     panic_mode_recovery(parser);

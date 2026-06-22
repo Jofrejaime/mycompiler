@@ -116,7 +116,14 @@ void scope_free(scope_t *scope) {
         while (entry) {
             symbol_entry_t *next = entry->next;
             free(entry->name);
-            /* Note: entry->info is managed by parser, not freed here */
+            /* Free symbol_info_t and its fields array */
+            if (entry->info) {
+                symbol_info_t *info = (symbol_info_t*)entry->info;
+                if (info->fields) {
+                    free(info->fields);
+                }
+                free(info);
+            }
             free(entry);
             entry = next;
         }
@@ -414,4 +421,25 @@ void print_scope_stack(scope_t **scope_stack, int stack_size) {
         print_scope(scope_stack[i]);
         printf("\n");
     }
+}
+
+/* ============================================================================
+   LOOKUP DE CAMPO DE STRUCT/UNION
+   ============================================================================ */
+
+struct_field_t* lookup_struct_field(parser_t *parser,
+                                    const char *struct_name,
+                                    const char *field_name) {
+    if (!parser || !struct_name || !field_name) return NULL;
+
+    symbol_info_t *info = (symbol_info_t*)scope_lookup_symbol(
+                              parser->global_scope, struct_name);
+    if (!info || !info->is_struct_or_union || !info->fields) return NULL;
+
+    for (int i = 0; i < info->field_count; i++) {
+        if (strcmp(info->fields[i].name, field_name) == 0) {
+            return &info->fields[i];
+        }
+    }
+    return NULL;
 }

@@ -10,6 +10,7 @@ extern int get_base_type_size(int data_type, int is_pointer);
 void parse_campos_struct_union(parser_t *parser, ast_node_t *parent, int *total_size);
 ast_node_t* parse_declaracao_typedef(parser_t *parser);
 ast_node_t* parse_declaracao_union(parser_t *parser);
+static void attach_struct_fields(symbol_info_t *info, ast_node_t *struct_node);
 
 /*
    Parse pointer declarators: * or ** or ***
@@ -26,25 +27,38 @@ int parse_asteriscos(parser_t *parser) {
 
 /*
    Parse array dimensions: [expr] or [expr][expr]...
-   Stores dimensions and returns count
+   Stores the integer constant value when the size is a literal;
+   stores 0 for empty brackets or non-constant expressions.
+   Returns number of dimensions.
 */
 int parse_sufixo_array(parser_t *parser, int *dimensions) {
     int dim_count = 0;
-    
+
     while (match(parser, SYM_LBRACKET)) {
-        consume_token(parser);  // Consume '['
-        
-        /* Parse array size - can be empty or expression */
+        consume_token(parser);  /* Consume '[' */
+
         if (match(parser, SYM_RBRACKET)) {
-            /* Empty brackets [] */
+            /* Empty brackets [] — unknown/flexible size */
             dimensions[dim_count++] = 0;
+        } else if (match(parser, TK_NUM_INT)) {
+            /* Constant integer dimension — capture the value */
+            token_t size_tok = peek_token(parser);
+            dimensions[dim_count++] = size_tok.valor.valor_int
+                                      ? size_tok.valor.valor_int
+                                      : (int)strtol(size_tok.lexeme, NULL, 10);
+            consume_token(parser);
+            /* There may still be more tokens before ']' (e.g. constant expr).
+               Consume them so the expect below finds ']'. */
+            while (!match(parser, SYM_RBRACKET) && !match(parser, TK_EOF)) {
+                consume_token(parser);
+            }
         } else {
-            /* Consume an expression for the size */
+            /* Non-constant expression — parse it but record size as 0 */
             parse_expressao(parser);
-            dimensions[dim_count++] = 0;  /* Mark as dynamic/expression */
+            dimensions[dim_count++] = 0;
         }
-        
-        expect(parser, SYM_RBRACKET);  // Consume ']'
+
+        expect(parser, SYM_RBRACKET);  /* Consume ']' */
     }
     return dim_count;
 }
@@ -213,10 +227,10 @@ ast_node_t* parse_declaracao_variavel_global(parser_t *parser) {
         for (int i = 0; i < dim_count; i++)
             var_decl->data.decl.array_dimensions[i] = dimensions[i];
 
-        /* Optional initializer */
+        /* Optional initializer — supports both scalar and brace-enclosed lists */
         if (match(parser, OP_ASSIGN)) {
             consume_token(parser);  // Consume '='
-            ast_node_t *init_expr = parse_expressao(parser);
+            ast_node_t *init_expr = parse_inicializacao(parser);
             var_decl->data.decl.initializer = init_expr;
         }
 
@@ -279,6 +293,7 @@ ast_node_t* parse_declaracao_variavel_global(parser_t *parser) {
    ListaParametros → Parametro (SYM_COMMA Parametro)*
                    | KW_VOID
                    | ε
+   Parametro → EspecificadorTipo [Asteriscos] [TK_ID [SufixoArray]]
 */
 void parse_lista_parametros(parser_t *parser, ast_node_t *func_node, 
                             int *param_types, int *param_count) {
@@ -289,57 +304,86 @@ void parse_lista_parametros(parser_t *parser, ast_node_t *func_node,
         return;
     }
     
-    /* void parameter list */
+    /* void parameter list: void alone means no parameters */
     if (match(parser, KW_VOID)) {
+        /* Peek ahead: if next is ')' it's "(void)" meaning no params */
+        int save = parser->current_position;
         consume_token(parser);
         if (match(parser, SYM_RPAREN)) {
-            return;  /* void means no parameters */
+            return;  /* void — no parameters */
         }
-        /* Otherwise, it's a parameter named 'void' - error, but continue */
+        /* Otherwise treat 'void' as a parameter type — restore */
+        parser->current_position = save;
     }
     
     /* Parse parameters */
     do {
+        /* Variadic '...' — stop parameter parsing */
+        if (match(parser, SYM_DOT)) {
+            /* Consume '...' (three dots arrive as separate SYM_DOT tokens
+               from the lexer; consume all three) */
+            consume_token(parser);
+            if (match(parser, SYM_DOT)) consume_token(parser);
+            if (match(parser, SYM_DOT)) consume_token(parser);
+            break;
+        }
+
         int param_type = parse_especificador_tipo(parser);
         int pointer_level = parse_asteriscos(parser);
-        token_t param_name = peek_token(parser);
-        expect(parser, TK_ID);
-        
+
+        /* Name is optional (prototype without parameter names) */
+        char param_name_buf[256] = "";
+        int  has_name = 0;
+        token_t param_name_tok = peek_token(parser);
+
+        if (match(parser, TK_ID)) {
+            strncpy(param_name_buf, param_name_tok.lexeme,
+                    sizeof(param_name_buf) - 1);
+            param_name_buf[sizeof(param_name_buf) - 1] = '\0';
+            has_name = 1;
+            consume_token(parser);
+        }
+
         /* Check for array parameter */
-        int dimensions[8];
+        int dimensions[8] = {0};
         int dim_count = parse_sufixo_array(parser, dimensions);
         int is_array = (dim_count > 0);
         
-        /* Create parameter node */
-        ast_node_t *param = create_ast_node(AST_PARAM_DECL, param_name.lexeme,
-                                           param_name.linha, param_name.coluna);
-        param->data_type = param_type;
+        /* Create parameter node (name may be NULL for anonymous params) */
+        ast_node_t *param = create_ast_node(
+            AST_PARAM_DECL,
+            has_name ? param_name_buf : NULL,
+            param_name_tok.linha, param_name_tok.coluna);
+        param->data_type    = param_type;
         param->operator_type = pointer_level;
         add_ast_child(func_node, param);
         
         /* Add to parameter types array */
-        param_types[*param_count] = param_type;
-        (*param_count)++;
+        if (*param_count < 32) {
+            param_types[*param_count] = param_type;
+            (*param_count)++;
+        }
         
-        /* Add parameter to local symbol table */
-        symbol_info_t *param_info = (symbol_info_t*)calloc(1, sizeof(symbol_info_t));
-        param_info->data_type = param_type;
-        param_info->is_pointer = pointer_level;
-        param_info->kind = SYMBOL_PARAMETER;
-        param_info->variable_type = VAR_PARAMETER;
-        param_info->scope_id = parser->current_local_table ? parser->current_local_table->scope_id : 1;
-        param_info->is_array = is_array;
-        param_info->size_bytes = (pointer_level > 0) ? 8 : 4;  /* Parameters are typically 4 bytes */
-        
-        if (parser->current_local_table) {
-            param_info->memory_address = scope_allocate_memory(parser->current_local_table, 4);
-            add_local_symbol(parser, param_name.lexeme, param_info);
-            enrich_symbol_type(parser, param_name.lexeme, param_type, pointer_level);
-            enrich_symbol_scope(parser, param_name.lexeme, param_info->scope_id, VAR_PARAMETER);
-            enrich_symbol_memory(parser, param_name.lexeme, param_info->memory_address, param_info->size_bytes);
-            if (is_array) {
-                enrich_symbol_array(parser, param_name.lexeme, dimensions, dim_count);
-            }
+        /* Only register named parameters in the local symbol table */
+        if (has_name && parser->current_local_table) {
+            symbol_info_t *param_info = (symbol_info_t*)calloc(1, sizeof(symbol_info_t));
+            param_info->data_type     = param_type;
+            param_info->is_pointer    = pointer_level;
+            param_info->kind          = SYMBOL_PARAMETER;
+            param_info->variable_type = VAR_PARAMETER;
+            param_info->scope_id      = parser->current_local_table->scope_id;
+            param_info->is_array      = is_array;
+            param_info->size_bytes    = (pointer_level > 0) ? 8 : 4;
+
+            param_info->memory_address =
+                scope_allocate_memory(parser->current_local_table, param_info->size_bytes);
+            add_local_symbol(parser, param_name_buf, param_info);
+            enrich_symbol_type(parser, param_name_buf, param_type, pointer_level);
+            enrich_symbol_scope(parser, param_name_buf, param_info->scope_id, VAR_PARAMETER);
+            enrich_symbol_memory(parser, param_name_buf,
+                                  param_info->memory_address, param_info->size_bytes);
+            if (is_array)
+                enrich_symbol_array(parser, param_name_buf, dimensions, dim_count);
         }
         
         /* Check for more parameters */
@@ -461,7 +505,9 @@ ast_node_t* parse_declaracao_struct(parser_t *parser) {
         struct_info->variable_type = VAR_GLOBAL;
         struct_info->scope_id = 0;
         struct_info->size_bytes = total_size;
+        struct_info->is_struct_or_union = 1;
         
+        attach_struct_fields(struct_info, struct_decl);
         add_global_symbol(parser, struct_name, struct_info);
     } else {
         /* Forward declaration or reference */
@@ -472,50 +518,102 @@ ast_node_t* parse_declaracao_struct(parser_t *parser) {
 }
 
 /* ============================================================================
-   HELPER: Parse campos de struct/union
+   HELPER: Attach field table to a struct/union symbol_info_t from its AST children
    ============================================================================ */
 
+static void attach_struct_fields(symbol_info_t *info, ast_node_t *struct_node) {
+    if (!info || !struct_node) return;
+
+    /* Count VAR_DECL children */
+    int count = 0;
+    for (int i = 0; i < struct_node->child_count; i++) {
+        if (struct_node->children[i] &&
+            struct_node->children[i]->type == AST_VAR_DECL) {
+            count++;
+        }
+    }
+    if (count == 0) return;
+
+    struct_field_t *fields = (struct_field_t*)calloc(count, sizeof(struct_field_t));
+    if (!fields) return;
+
+    int offset = 0;
+    int idx = 0;
+    for (int i = 0; i < struct_node->child_count; i++) {
+        ast_node_t *m = struct_node->children[i];
+        if (!m || m->type != AST_VAR_DECL) continue;
+
+        strncpy(fields[idx].name,
+                m->data.decl.name ? m->data.decl.name : "",
+                sizeof(fields[idx].name) - 1);
+        fields[idx].data_type  = m->data_type;
+        fields[idx].is_pointer = m->operator_type;
+        fields[idx].is_array   = (m->data.decl.array_dim_count > 0);
+        fields[idx].array_dim_count = m->data.decl.array_dim_count;
+        for (int d = 0; d < m->data.decl.array_dim_count && d < 8; d++)
+            fields[idx].array_dimensions[d] = m->data.decl.array_dimensions[d];
+
+        int sz = calculate_total_size(m->data_type, m->operator_type,
+                                      m->data.decl.array_dimensions,
+                                      m->data.decl.array_dim_count);
+        fields[idx].size_bytes = sz;
+        fields[idx].offset     = offset;
+        offset += sz;
+        idx++;
+    }
+
+    info->fields             = fields;
+    info->field_count        = idx;
+    info->is_struct_or_union = 1;
+}
+
 void parse_campos_struct_union(parser_t *parser, ast_node_t *parent, int *total_size) {
+    /* Temporary storage for fields before we know the struct symbol name.
+       Fields are collected here and attached to the symbol_info_t after
+       parse_declaracao_struct / parse_declaracao_union calls add_global_symbol. */
     while (!match(parser, SYM_RBRACE) && !match(parser, TK_EOF)) {
         int member_type = parse_especificador_tipo(parser);
-        int pointer_level = parse_asteriscos(parser);
-        
-        token_t member_name = peek_token(parser);
-        expect(parser, TK_ID);
-        
-        /* Parse array dimensions */
-        int dimensions[8];
-        int dim_count = parse_sufixo_array(parser, dimensions);
-        
-        /* VALIDAÇÃO: Bloquear inicializadores em campos de struct */
-        if (match(parser, OP_ASSIGN)) {
-            token_t assign_token = peek_token(parser);
-            syntax_error(parser, 
-                        "Erro: inicializadores nao permitidos em campos de struct/union (C puro nao permite)",
-                        SYM_SEMICOLON, assign_token);
-            /* Panic recovery: skip até semicolon */
-            while (!match(parser, SYM_SEMICOLON) && !match(parser, TK_EOF)) {
-                consume_token(parser);
+
+        /* Support multiple declarators per field: int x, *y; */
+        do {
+            int pointer_level = parse_asteriscos(parser);
+
+            token_t member_name = peek_token(parser);
+            expect(parser, TK_ID);
+
+            /* Parse array dimensions */
+            int dimensions[8];
+            int dim_count = parse_sufixo_array(parser, dimensions);
+
+            /* VALIDAÇÃO: Bloquear inicializadores em campos de struct */
+            if (match(parser, OP_ASSIGN)) {
+                token_t assign_token = peek_token(parser);
+                syntax_error(parser,
+                            "Erro: inicializadores nao permitidos em campos de struct/union (C puro nao permite)",
+                            SYM_SEMICOLON, assign_token);
+                while (!match(parser, SYM_SEMICOLON) && !match(parser, TK_EOF)) {
+                    consume_token(parser);
+                }
             }
-        }
-        
+
+            /* Create member AST node */
+            ast_node_t *member = create_ast_node(AST_VAR_DECL, member_name.lexeme,
+                                                member_name.linha, member_name.coluna);
+            member->data_type = member_type;
+            member->operator_type = pointer_level;
+            member->data.decl.array_dim_count = dim_count;
+            for (int i = 0; i < dim_count; i++)
+                member->data.decl.array_dimensions[i] = dimensions[i];
+            add_ast_child(parent, member);
+
+            int member_size = calculate_total_size(member_type, pointer_level, dimensions, dim_count);
+            *total_size += member_size;
+
+            if (!match(parser, SYM_COMMA)) break;
+            consume_token(parser);  /* consume ',' between declarators */
+        } while (1);
+
         expect(parser, SYM_SEMICOLON);
-        
-        /* Create member node */
-        ast_node_t *member = create_ast_node(AST_VAR_DECL, member_name.lexeme,
-                                            member_name.linha, member_name.coluna);
-        member->data_type = member_type;
-        member->operator_type = pointer_level;
-        member->data.decl.array_dim_count = dim_count;
-        for (int i = 0; i < dim_count; i++) {
-            member->data.decl.array_dimensions[i] = dimensions[i];
-        }
-        add_ast_child(parent, member);
-        
-        /* Calculate size using helper function */
-        int member_size = calculate_total_size(member_type, pointer_level, dimensions, dim_count);
-        
-        *total_size += member_size;
     }
 }
 
@@ -602,7 +700,9 @@ ast_node_t* parse_declaracao_union(parser_t *parser) {
         union_info->variable_type = VAR_GLOBAL;
         union_info->scope_id = 0;
         union_info->size_bytes = max_size;
-        
+        union_info->is_struct_or_union = 1;
+
+        attach_struct_fields(union_info, union_decl);
         add_global_symbol(parser, union_name, union_info);
     } else {
         /* Forward declaration or reference */
@@ -688,6 +788,17 @@ ast_node_t* parse_declaracao_typedef(parser_t *parser) {
     for (int i = 0; i < dim_count; i++) {
         type_info->array_dimensions[i] = dimensions[i];
     }
+    /* Store the base struct/union tag name for semantic resolution */
+    if (type_node && type_node->data.decl.name) {
+        strncpy(type_info->typedef_base_name,
+                type_node->data.decl.name,
+                sizeof(type_info->typedef_base_name) - 1);
+    }
+    /* Inherit field table from the base struct/union if it was defined inline */
+    if (type_node && (base_type == KW_STRUCT || base_type == KW_UNION)) {
+        attach_struct_fields(type_info, type_node);
+        type_info->is_struct_or_union = 1;
+    }
     
     if (!add_global_symbol(parser, new_type_name.lexeme, type_info)) {
         syntax_error(parser, "typedef ja declarado", -1, new_type_name);
@@ -728,18 +839,64 @@ void parse_declaracao_global(parser_t *parser, ast_node_t *program_node) {
         return;
     }
     
-    /* Struct declaration */
+    /* Struct declaration or struct-typed variable */
     if (token.tipo == KW_STRUCT) {
-        ast_node_t *struct_decl = parse_declaracao_struct(parser);
-        add_ast_child(program_node, struct_decl);
-        return;
+        /* Lookahead: struct TAG { → struct definition
+                     struct TAG ID → variable of struct type
+                     struct TAG ;  → forward declaration */
+        int save = parser->current_position;
+        consume_token(parser);  /* consume 'struct' */
+        if (match(parser, TK_ID)) {
+            consume_token(parser);  /* consume TAG */
+            if (match(parser, SYM_LBRACE) || match(parser, SYM_SEMICOLON)) {
+                /* struct definition or forward decl — restore and dispatch */
+                parser->current_position = save;
+                ast_node_t *struct_decl = parse_declaracao_struct(parser);
+                add_ast_child(program_node, struct_decl);
+                return;
+            } else {
+                /* struct TAG var ... — treat as variable declaration */
+                parser->current_position = save;
+                ast_node_t *var = parse_declaracao_variavel_global(parser);
+                add_ast_child(program_node, var);
+                return;
+            }
+        } else if (match(parser, SYM_LBRACE)) {
+            /* anonymous struct definition */
+            parser->current_position = save;
+            ast_node_t *struct_decl = parse_declaracao_struct(parser);
+            add_ast_child(program_node, struct_decl);
+            return;
+        } else {
+            parser->current_position = save;
+        }
     }
     
-    /* Union declaration */
+    /* Union declaration or union-typed variable */
     if (token.tipo == KW_UNION) {
-        ast_node_t *union_decl = parse_declaracao_union(parser);
-        add_ast_child(program_node, union_decl);
-        return;
+        int save = parser->current_position;
+        consume_token(parser);  /* consume 'union' */
+        if (match(parser, TK_ID)) {
+            consume_token(parser);  /* consume TAG */
+            if (match(parser, SYM_LBRACE) || match(parser, SYM_SEMICOLON)) {
+                parser->current_position = save;
+                ast_node_t *union_decl = parse_declaracao_union(parser);
+                add_ast_child(program_node, union_decl);
+                return;
+            } else {
+                parser->current_position = save;
+                ast_node_t *var = parse_declaracao_variavel_global(parser);
+                add_ast_child(program_node, var);
+                return;
+            }
+        } else if (match(parser, SYM_LBRACE)) {
+            parser->current_position = save;
+            ast_node_t *union_decl = parse_declaracao_union(parser);
+            add_ast_child(program_node, union_decl);
+            return;
+        } else {
+            parser->current_position = save;
+        }
     }
     
     /* Variable or function declaration */

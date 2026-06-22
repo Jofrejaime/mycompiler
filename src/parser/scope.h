@@ -46,7 +46,28 @@ typedef struct symbol_info_s {
    int function_param_types[32];
    int function_param_count;
    int is_typedef;
+   /* Struct/union fields table */
+   int is_struct_or_union;          /* 1 if this symbol IS a struct/union type */
+   struct struct_field_s *fields;   /* Array of fields (NULL if not struct/union) */
+   int field_count;                 /* Number of fields */
+   /* Typedef base name (for typedef → struct resolution) */
+   char typedef_base_name[64];      /* e.g. "Node" for typedef struct Node Node_t */
 } symbol_info_t;
+
+/* ============================================================================
+   ESTRUTURA DE CAMPO DE STRUCT/UNION
+   ============================================================================ */
+
+typedef struct struct_field_s {
+    char name[64];          /* Field name */
+    int  data_type;         /* KW_INT, KW_CHAR, etc. */
+    int  is_pointer;        /* Pointer level */
+    int  is_array;
+    int  array_dimensions[8];
+    int  array_dim_count;
+    int  size_bytes;        /* Size of this field */
+    int  offset;            /* Byte offset within struct */
+} struct_field_t;
 
 typedef struct scope_s {
     int scope_id;                   /* ID único do escopo */
@@ -150,6 +171,18 @@ int scope_allocate_memory(scope_t *scope, int size);
 
 const char* type_to_string(int type);
 void print_symbol_info(symbol_info_t *info);
+
+/*
+   Buscar campo de struct/union na tabela global
+
+   Entrada: parser  - estrutura do parser
+            struct_name - nome do struct/union
+            field_name  - nome do campo
+   Saída: ponteiro para struct_field_t, ou NULL se não encontrado
+*/
+struct_field_t* lookup_struct_field(struct parser_s *parser,
+                                    const char *struct_name,
+                                    const char *field_name);
 
 /* ============================================================================
    FUNÇÕES DE IMPRESSÃO (DEBUG)

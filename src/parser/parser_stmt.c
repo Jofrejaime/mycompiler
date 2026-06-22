@@ -145,35 +145,42 @@ ast_node_t* parse_instrucao_for(parser_t *parser) {
     
     expect(parser, SYM_LPAREN);  // Consume '('
     
-    /* Initialization (optional) */
+    /* Initialization (optional) — slot 0 */
     ast_node_t *init = NULL;
     if (!match(parser, SYM_SEMICOLON)) {
         init = parse_expressao(parser);
     }
     expect(parser, SYM_SEMICOLON);  // Consume ';'
     
-    /* Condition (optional) */
+    /* Condition (optional) — slot 1 */
     ast_node_t *condition = NULL;
     if (!match(parser, SYM_SEMICOLON)) {
         condition = parse_expressao(parser);
     }
     expect(parser, SYM_SEMICOLON);  // Consume ';'
     
-    /* Increment (optional) */
+    /* Increment (optional) — slot 2 */
     ast_node_t *increment = NULL;
     if (!match(parser, SYM_RPAREN)) {
         increment = parse_expressao(parser);
     }
     expect(parser, SYM_RPAREN);  // Consume ')'
     
-    /* Body */
+    /* Body — slot 3 */
     ast_node_t *body = parse_instrucao(parser);
     
     ast_node_t *for_node = create_ast_node(AST_FOR_STMT, NULL, token.linha, token.coluna);
-    if (init) add_ast_child(for_node, init);
-    if (condition) add_ast_child(for_node, condition);
-    if (increment) add_ast_child(for_node, increment);
-    add_ast_child(for_node, body);
+    /*
+     * SLOTS FIXOS (para fase semântica):
+     *   children[0] = init      (NULL se ausente)
+     *   children[1] = condition (NULL se ausente)
+     *   children[2] = increment (NULL se ausente)
+     *   children[3] = body
+     */
+    add_ast_child(for_node, init);       /* slot 0: init      (pode ser NULL) */
+    add_ast_child(for_node, condition);  /* slot 1: condition (pode ser NULL) */
+    add_ast_child(for_node, increment);  /* slot 2: increment (pode ser NULL) */
+    add_ast_child(for_node, body);       /* slot 3: body */
     
     return for_node;
 }
@@ -568,10 +575,11 @@ void parse_lista_instrucoes_declaracoes(parser_t *parser, ast_node_t *parent) {
             }
         }
 
-        /* Progress guarantee: if nothing was consumed, consume one token. */
+        /* Progress guarantee: if nothing was consumed, advance silently.
+           The error was already reported (and recovery already ran) inside
+           parse_declaracao_local / parse_instrucao. Calling syntax_error here
+           would only produce a duplicate spurious message. */
         if (parser->current_position == before) {
-            token_t stuck = peek_token(parser);
-            syntax_error(parser, "token inesperado em bloco", -1, stuck);
             if (!match(parser, SYM_RBRACE) && !match(parser, TK_EOF)) {
                 consume_token(parser);
             }
