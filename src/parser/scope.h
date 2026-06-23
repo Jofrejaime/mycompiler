@@ -1,6 +1,9 @@
 #ifndef SCOPE_H
 #define SCOPE_H
 
+/* Forward declarations */
+struct ast_node_s;
+
 /* ============================================================================
    SCOPE MANAGEMENT - HEADER
    
@@ -52,6 +55,12 @@ typedef struct symbol_info_s {
    int field_count;                 /* Number of fields */
    /* Typedef base name (for typedef → struct resolution) */
    char typedef_base_name[64];      /* e.g. "Node" for typedef struct Node Node_t */
+   /* Constant initializer (set only when initializer is a single literal) */
+   int has_const_init;              /* 1 if constant value is known at parse time */
+   union {
+       long long int_value;         /* KW_INT, KW_CHAR literals */
+       double      double_value;    /* KW_FLOAT, KW_DOUBLE literals */
+   } const_value;
 } symbol_info_t;
 
 /* ============================================================================
@@ -183,6 +192,13 @@ void print_symbol_info(symbol_info_t *info);
 struct_field_t* lookup_struct_field(struct parser_s *parser,
                                     const char *struct_name,
                                     const char *field_name);
+
+/*
+   Tentar guardar o valor do inicializador se for literal simples.
+   Preenche has_const_init e const_value no symbol_info_t.
+   Não faz nada se o nó não for um literal.
+*/
+void try_set_const_init(symbol_info_t *info, struct ast_node_s *init_node);
 
 /* ============================================================================
    FUNÇÕES DE IMPRESSÃO (DEBUG)

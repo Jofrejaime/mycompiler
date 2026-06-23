@@ -1,5 +1,6 @@
 #define _POSIX_C_SOURCE 200809L
 #include "scope.h"
+#include "ast.h"
 #include "parser.h"
 #include <stdlib.h>
 #include <string.h>
@@ -307,6 +308,7 @@ static const char* scope_label(const scope_t *scope) {
     return (scope->scope_id == 0) ? "global" : "local";
 }
 
+#ifdef DEBUG_SYMBOLS
 void print_symbol_info(symbol_info_t *info) {
     if (!info) {
         printf("%-12s %-12s %-12s %-8s %-10s %-10s %-8s\n",
@@ -420,6 +422,38 @@ void print_scope_stack(scope_t **scope_stack, int stack_size) {
         printf("Level %d:\n", i);
         print_scope(scope_stack[i]);
         printf("\n");
+    }
+}
+#endif /* DEBUG_SYMBOLS */
+
+/* ============================================================================
+   VALOR LITERAL CONSTANTE
+   ============================================================================ */
+
+void try_set_const_init(symbol_info_t *info, struct ast_node_s *init_node) {
+    if (!info || !init_node) return;
+    /* Only handle single NODE_LITERAL nodes — not expressions or lists */
+    if (init_node->type != NODE_LITERAL) return;
+    if (!init_node->data.expr.value.string_value) return;
+
+    const char *s = init_node->data.expr.value.string_value;
+    switch (init_node->literal_type) {
+        case AST_INT_LITERAL:
+            info->has_const_init    = 1;
+            info->const_value.int_value = (long long)strtoll(s, NULL, 10);
+            break;
+        case AST_FLOAT_LITERAL:
+            info->has_const_init       = 1;
+            info->const_value.double_value = strtod(s, NULL);
+            break;
+        case AST_CHAR_LITERAL:
+            info->has_const_init = 1;
+            /* lexeme stored as 'x' — take the character between quotes */
+            info->const_value.int_value = (long long)(s[0] == '\'' ? s[1] : s[0]);
+            break;
+        default:
+            /* STRING or anything else — not stored */
+            break;
     }
 }
 

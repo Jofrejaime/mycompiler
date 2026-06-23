@@ -258,6 +258,9 @@ ast_node_t* parse_declaracao_variavel_global(parser_t *parser) {
         enrich_symbol_memory(parser, id_token.lexeme, info->memory_address, total_size);
         if (is_array)
             enrich_symbol_array(parser, id_token.lexeme, dimensions, dim_count);
+        /* Store literal constant value if initializer is a simple literal */
+        if (var_decl->data.decl.initializer)
+            try_set_const_init(info, var_decl->data.decl.initializer);
 
         /* Accumulate nodes */
         if (decl_count == 0) {

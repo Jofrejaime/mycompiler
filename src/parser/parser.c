@@ -1,13 +1,9 @@
-int DEBUG_TOKEN_INDEX = 0;
 #include "parser.h"
 #include <stdlib.h>
 #include <string.h>
 
 /* ============================================================================
    ANALISADOR SINTÁTICO (PARSER) - IMPLEMENTAÇÃO
-   
-   Implementa o método Top-Down Recursivo Descendente sem backtracking (LL(1))
-   
    ============================================================================ */
 
 /* ============================================================================
@@ -20,7 +16,9 @@ static int register_scope(parser_t *parser, scope_t *scope) {
     }
 
     if (parser->total_scopes >= 1024) {
+#ifdef DEBUG_PARSER
         fprintf(stderr, "Erro: limite de escopos atingido\n");
+#endif
         return 0;
     }
 
@@ -69,8 +67,8 @@ parser_t* parser_init(tabla_simbolos_t *symbol_table) {
     parser->next_scope_id = 1;  /* 0 is reserved for global */
     
     /* Initialize memory allocation */
-    parser->next_global_address = 0;    /* Global variables start at 0 */
-    parser->next_local_offset = 0;      /* Local variables use stack offsets */
+    parser->next_global_address = 0;
+    parser->next_local_offset = 0;
     
     /* Initialize error handling */
     parser->error_count = 0;
@@ -107,11 +105,9 @@ int parser_run(parser_t *parser) {
         return -1;
     }
     
-    /* Parse program */
+    /* Parse program — no debug output by default */
     parser->ast_root = parse_programa(parser);
-    print_all_scopes(parser);
     
-    /* Return error count */
     return parser->error_count;
 }
 
@@ -120,7 +116,6 @@ int parser_run(parser_t *parser) {
    ============================================================================ */
 
 token_t peek_token(parser_t *parser) {
-    // DEBUG_TOKEN_INDEX++;
     if (parser->current_position >= parser->token_stream->quantidade) {
         token_t eof_token;
         eof_token.tipo = TK_EOF;
@@ -150,7 +145,7 @@ void expect(parser_t *parser, int token_type) {
         consume_token(parser);
     } else {
         token_t found = peek_token(parser);
-        syntax_error(parser,  "token inesperado", token_type, found);
+        syntax_error(parser, "token inesperado", token_type, found);
     }
 }
 
@@ -159,23 +154,12 @@ void expect(parser_t *parser, int token_type) {
    ============================================================================ */
 
 symbol_info_t* lookup_symbol(parser_t *parser, const char *name) {
-    /* Search recursively through scope hierarchy:
-       1. Start from current local scope
-       2. If not found, search parent scopes recursively
-       3. Finally search global scope
-       
-       This implements requirement 7.4: hierarchical symbol lookup
-    */
-    
-    /* Search through active local scope stack from top to bottom */
     for (int i = parser->scope_stack_size - 1; i >= 0; i--) {
         symbol_info_t *info = (symbol_info_t*)scope_lookup_symbol(parser->scope_stack[i], name);
         if (info) {
             return info;
         }
     }
-    
-    /* Finally, search in global scope */
     return (symbol_info_t*)scope_lookup_symbol(parser->global_scope, name);
 }
 
@@ -196,27 +180,29 @@ int add_global_symbol(parser_t *parser, const char *name, symbol_info_t *info) {
 
 int add_local_symbol(parser_t *parser, const char *name, symbol_info_t *info) {
     if (!parser->current_local_table) {
-        fprintf(stderr, "Erro: tentativa de adicionar símbolo local sem escopo local ativo\n");
+#ifdef DEBUG_PARSER
+        fprintf(stderr, "Erro: tentativa de adicionar simbolo local sem escopo ativo\n");
+#endif
         return 0;
     }
     return scope_add_symbol(parser->current_local_table, name, info);
 }
 
 void enter_local_scope(parser_t *parser) {
-    /* Create new local scope */
     int scope_id = parser->next_scope_id++;
     int parent_id = parser->current_scope ? parser->current_scope->scope_id : 0;
     
     scope_t *new_scope = scope_create(scope_id, parent_id, parser->next_local_offset);
     if (!new_scope) {
+#ifdef DEBUG_PARSER
         fprintf(stderr, "Erro: falha ao criar novo escopo local\n");
+#endif
         return;
     }
     
-    /* Push to scope stack */
     if (parser->scope_stack_size >= parser->scope_stack_capacity) {
         parser->scope_stack_capacity *= 2;
-        scope_t **new_stack = (scope_t**)realloc(parser->scope_stack, 
+        scope_t **new_stack = (scope_t**)realloc(parser->scope_stack,
                                                   sizeof(scope_t*) * parser->scope_stack_capacity);
         if (!new_stack) {
             scope_free(new_scope);
@@ -237,14 +223,14 @@ void enter_local_scope(parser_t *parser) {
 
 void exit_local_scope(parser_t *parser) {
     if (parser->scope_stack_size == 0) {
+#ifdef DEBUG_PARSER
         fprintf(stderr, "Erro: tentativa de sair de escopo sem escopo ativo\n");
+#endif
         return;
     }
     
-    /* Pop from scope stack */
     parser->scope_stack_size--;
     
-    /* Update current local table */
     if (parser->scope_stack_size > 0) {
         parser->current_local_table = parser->scope_stack[parser->scope_stack_size - 1];
         parser->current_scope = parser->current_local_table;
@@ -260,36 +246,28 @@ void exit_local_scope(parser_t *parser) {
 
 void enrich_symbol_type(parser_t *parser, const char *name, int data_type, int is_pointer) {
     symbol_info_t *info = lookup_symbol(parser, name);
-    if (!info) {
-        return;
-    }
+    if (!info) return;
     info->data_type = data_type;
     info->is_pointer = is_pointer;
 }
 
 void enrich_symbol_scope(parser_t *parser, const char *name, int scope_id, variable_type_t var_type) {
     symbol_info_t *info = lookup_symbol(parser, name);
-    if (!info) {
-        return;
-    }
+    if (!info) return;
     info->scope_id = scope_id;
     info->variable_type = var_type;
 }
 
 void enrich_symbol_memory(parser_t *parser, const char *name, int address, int size) {
     symbol_info_t *info = lookup_symbol(parser, name);
-    if (!info) {
-        return;
-    }
+    if (!info) return;
     info->memory_address = address;
     info->size_bytes = size;
 }
 
 void enrich_symbol_array(parser_t *parser, const char *name, int *dimensions, int dim_count) {
     symbol_info_t *info = lookup_symbol(parser, name);
-    if (!info) {
-        return;
-    }
+    if (!info) return;
     info->is_array = (dim_count > 0);
     info->array_dim_count = dim_count;
     for (int i = 0; i < dim_count && i < 8; i++) {
@@ -297,12 +275,10 @@ void enrich_symbol_array(parser_t *parser, const char *name, int *dimensions, in
     }
 }
 
-void enrich_symbol_function(parser_t *parser, const char *name, int return_type, 
+void enrich_symbol_function(parser_t *parser, const char *name, int return_type,
                             int *param_types, int param_count) {
     symbol_info_t *info = lookup_symbol(parser, name);
-    if (!info) {
-        return;
-    }
+    if (!info) return;
     info->is_function = 1;
     info->function_return_type = return_type;
     info->function_param_count = param_count;
@@ -310,11 +286,3 @@ void enrich_symbol_function(parser_t *parser, const char *name, int return_type,
         info->function_param_types[i] = param_types[i];
     }
 }
-
-/* ============================================================================
-   FUNÇÕES DE PARSING (Não-terminais da gramática)
-   ============================================================================ */
-
-/* ============================================================================
-    FUNÇÕES UTILITÁRIAS
-    ============================================================================ */

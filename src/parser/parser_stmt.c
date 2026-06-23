@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+extern int calculate_total_size(int data_type, int is_pointer,
+                                int *dimensions, int dim_count);
+
 void parse_lista_instrucoes_declaracoes(parser_t *parser, ast_node_t *parent);
 
 /* ============================================================================
@@ -504,13 +507,8 @@ ast_node_t* parse_declaracao_local(parser_t *parser) {
         for (int i = 0; i < dim_count; i++)
             info->array_dimensions[i] = dimensions[i];
 
-        /* Size calculation */
-        int element_size = (data_type == KW_CHAR)   ? 1 :
-                           (data_type == KW_DOUBLE)  ? 8 : 4;
-        if (pointer_level > 0) element_size = 8;
-        int total_size = element_size;
-        for (int i = 0; i < dim_count; i++)
-            if (dimensions[i] > 0) total_size *= dimensions[i];
+        /* Size calculation — use the centralised helper (same as global path) */
+        int total_size = calculate_total_size(data_type, pointer_level, dimensions, dim_count);
         info->size_bytes = total_size;
 
         if (parser->current_local_table) {
@@ -521,6 +519,9 @@ ast_node_t* parse_declaracao_local(parser_t *parser) {
             enrich_symbol_memory(parser, id_token.lexeme, info->memory_address, total_size);
             if (is_array)
                 enrich_symbol_array(parser, id_token.lexeme, dimensions, dim_count);
+            /* Store literal constant value if initializer is a simple literal */
+            if (var_decl->child_count > 0)
+                try_set_const_init(info, var_decl->children[0]);
         }
 
         /* Accumulate nodes */

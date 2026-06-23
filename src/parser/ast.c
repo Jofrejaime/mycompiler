@@ -211,6 +211,7 @@ const char* ast_node_type_name(node_type_t type) {
     }
 }
 
+#ifdef DEBUG_AST
 void print_ast(ast_node_t *node, int indent) {
     if (!node) return;
     for (int i = 0; i < indent; i++) printf("  ");
@@ -326,4 +327,5 @@ void print_ast(ast_node_t *node, int indent) {
             break;
     }
 }
+#endif /* DEBUG_AST */
  
