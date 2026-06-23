@@ -1,6 +1,6 @@
 /* TEST: functions.c
    Cobre: protótipos, funções completas, parâmetros sem nome, retorno ponteiro */
-
+#include <stdio.h>
 /* Protótipos com nomes */
 int    soma(int a, int b);
 void   imprime(char *msg);

@@ -275,40 +275,24 @@ const char* type_to_string(int type) {
     }
 }
 
+#ifdef DEBUG_SYMBOLS
 static const char* kind_to_string(symbol_info_t *info) {
-    if (!info) {
-        return "unknown";
-    }
-
-    if (info->is_function || info->kind == SYMBOL_FUNCTION) {
-        return "function";
-    }
-    if (info->is_typedef || info->kind == SYMBOL_TYPEDEF) {
-        return "typedef";
-    }
-
+    if (!info) return "unknown";
+    if (info->is_function || info->kind == SYMBOL_FUNCTION) return "function";
+    if (info->is_typedef  || info->kind == SYMBOL_TYPEDEF)  return "typedef";
     switch (info->kind) {
-        case SYMBOL_PARAMETER:
-            return "parameter";
-        case SYMBOL_STRUCT:
-            return "struct";
-        case SYMBOL_UNION:
-            return "union";
+        case SYMBOL_PARAMETER: return "parameter";
+        case SYMBOL_STRUCT:    return "struct";
+        case SYMBOL_UNION:     return "union";
         case SYMBOL_VARIABLE:
-        default:
-            return (info->variable_type == VAR_PARAMETER) ? "parameter" : "variable";
+        default: return (info->variable_type == VAR_PARAMETER) ? "parameter" : "variable";
     }
 }
 
 static const char* scope_label(const scope_t *scope) {
-    if (!scope) {
-        return "unknown";
-    }
-
+    if (!scope) return "unknown";
     return (scope->scope_id == 0) ? "global" : "local";
 }
-
-#ifdef DEBUG_SYMBOLS
 void print_symbol_info(symbol_info_t *info) {
     if (!info) {
         printf("%-12s %-12s %-12s %-8s %-10s %-10s %-8s\n",
