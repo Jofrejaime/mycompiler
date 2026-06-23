@@ -175,52 +175,31 @@ int scope_symbol_exists(scope_t *scope, const char *name);
 int scope_allocate_memory(scope_t *scope, int size);
 
 /* ============================================================================
-   FUNÇÕES DE IMPRESSÃO (DEBUG)
+   FUNÇÕES UTILITÁRIAS
    ============================================================================ */
 
 const char* type_to_string(int type);
-void print_symbol_info(symbol_info_t *info);
 
-/*
-   Buscar campo de struct/union na tabela global
-
-   Entrada: parser  - estrutura do parser
-            struct_name - nome do struct/union
-            field_name  - nome do campo
-   Saída: ponteiro para struct_field_t, ou NULL se não encontrado
-*/
 struct_field_t* lookup_struct_field(struct parser_s *parser,
                                     const char *struct_name,
                                     const char *field_name);
 
-/*
-   Tentar guardar o valor do inicializador se for literal simples.
-   Preenche has_const_init e const_value no symbol_info_t.
-   Não faz nada se o nó não for um literal.
-*/
 void try_set_const_init(symbol_info_t *info, struct ast_node_s *init_node);
 
 /* ============================================================================
-   FUNÇÕES DE IMPRESSÃO (DEBUG)
+   FUNÇÕES DE IMPRESSÃO (apenas com -DDEBUG_SYMBOLS)
    ============================================================================ */
 
-/*
-   Imprimir escopo (para debug)
-   
-   Entrada: scope - escopo a imprimir
-   Saída: void
-*/
+#ifdef DEBUG_SYMBOLS
+void print_symbol_info(symbol_info_t *info);
 void print_scope(scope_t *scope);
-
 void print_all_scopes(parser_t *parser);
-
-/*
-   Imprimir pilha de escopos (para debug)
-   
-   Entrada: scope_stack - array de escopos
-            stack_size - tamanho da pilha
-   Saída: void
-*/
 void print_scope_stack(scope_t **scope_stack, int stack_size);
-
+#else
+static inline void print_symbol_info(symbol_info_t *i)        { (void)i; }
+static inline void print_scope(scope_t *s)                    { (void)s; }
+static inline void print_all_scopes(parser_t *p)              { (void)p; }
+static inline void print_scope_stack(scope_t **s, int n)      { (void)s; (void)n; }
 #endif
+
+#endif /* SCOPE_H */

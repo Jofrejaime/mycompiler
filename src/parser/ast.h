@@ -250,21 +250,12 @@ void free_ast(ast_node_t *node);
    FUNÇÕES DE IMPRESSÃO (DEBUG)
    ============================================================================ */
 
-/*
-   Imprimir árvore AST (para debug)
-   
-   Entrada: node - raiz da árvore
-            indent - nível de indentação
-   Saída: void
-*/
+#ifdef DEBUG_AST
 void print_ast(ast_node_t *node, int indent);
+#else
+static inline void print_ast(ast_node_t *node, int indent) { (void)node; (void)indent; }
+#endif
 
-/*
-   Obter nome do tipo de nó (para debug)
-   
-   Entrada: type - tipo do nó
-   Saída: string com nome do tipo
-*/
 const char* ast_node_type_name(node_type_t type);
 
 #endif /* AST_H */
