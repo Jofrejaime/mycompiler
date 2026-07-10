@@ -186,12 +186,25 @@ ast_node_t* create_ast_node(node_type_t type, const void *meta, int line, int co
 
 /*
    Adicionar filho a um nó
-   
+
    Entrada: parent - nó pai
             child - nó filho a adicionar
    Saída: void
 */
 void add_ast_child(ast_node_t *parent, ast_node_t *child);
+
+/*
+   Anexar uma declaração ao pai, achatando o wrapper de multi-declaradores.
+
+   parse_declaracao_variavel_global/parse_declaracao_local embrulham
+   `int a, b, c;` num nó AST_BLOCK artificial. Esse bloco não corresponde a
+   nenhum escopo real e dessincroniza a travessia de escopos da análise
+   semântica — cada VAR_DECL deve ser filho directo do pai.
+
+   Usar APENAS com nós vindos dessas funções (um AST_BLOCK real nunca é
+   retornado por elas).
+*/
+void add_ast_decl_flat(ast_node_t *parent, ast_node_t *decl);
 
 /*
    Criar nó de operador binário

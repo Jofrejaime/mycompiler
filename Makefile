@@ -5,7 +5,7 @@
 # Projeto: Mini-Compilador C→C
 #   Fase 1: Análise Léxica    (✅ Completo)
 #   Fase 2: Análise Sintática (✅ Completo)
-#   Fase 3: Análise Semântica (⏳ Por fazer)
+#   Fase 3: Análise Semântica (✅ Completo)
 #
 # REQUISITO: este Makefile usa comandos POSIX (mkdir -p, rm -rf). Compilar num
 # shell POSIX — WSL, Git Bash ou MSYS2. No Windows nativo use `mingw32-make`
@@ -63,19 +63,28 @@ PARSER_SOURCES = src/parser/parser.c \
 				 src/parser/parser_decl.c \
 				 src/parser/parser_error.c \
 
+# Arquivos-fonte do Analisador Semântico (Fase 3)
+SEMANTIC_SOURCES = src/semantic/semantic.c \
+                   src/semantic/semantic_expr.c \
+                   src/semantic/semantic_stmt.c \
+                   src/semantic/semantic_decl.c \
+
+
 # Utilitários
 # UTILS_SOURCES = utils/printer.c
 
 # Todos os arquivos-fonte
 SOURCES = main.c \
           $(LEXER_SOURCES) \
-          $(PARSER_SOURCES)
+          $(PARSER_SOURCES) \
+          $(SEMANTIC_SOURCES)
 
 # Headers
 LEXER_HEADERS = src/lexer/lexer.h src/lexer/tokens.h src/lexer/keywords.h
 PARSER_HEADERS = src/parser/parser.h src/parser/ast.h src/parser/scope.h
+SEMANTIC_HEADERS = src/semantic/semantic.h
 UTILS_HEADERS = utils/printer.h
-HEADERS = $(LEXER_HEADERS) $(PARSER_HEADERS) $(UTILS_HEADERS)
+HEADERS = $(LEXER_HEADERS) $(PARSER_HEADERS) $(SEMANTIC_HEADERS) $(UTILS_HEADERS)
 
 # Arquivos-objeto
 OBJECTS = $(addprefix $(OBJDIR)/,$(SOURCES:.c=.o))
@@ -136,7 +145,7 @@ help:
 	@echo "Fases do compilador:"
 	@echo "  Fase 1: Análise Léxica (Lexer)      ✅ Completo"
 	@echo "  Fase 2: Análise Sintática (Parser)  ✅ Completo"
-	@echo "  Fase 3: Análise Semântica            ⏳ Por fazer"
+	@echo "  Fase 3: Análise Semântica            ✅ Completo"
 	@echo ""
 	@echo "Arquivos gerados:"
 	@echo "  $(TARGET_PATH)     - Executável do compilador"
