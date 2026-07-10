@@ -4,9 +4,6 @@
 #include <string.h>
 #include <stddef.h>
 
-extern int calculate_total_size(int data_type, int is_pointer,
-                                int *dimensions, int dim_count);
-
 void parse_lista_instrucoes_declaracoes(parser_t *parser, ast_node_t *parent);
 
 /* ============================================================================
@@ -510,24 +507,49 @@ ast_node_t* parse_declaracao_local(parser_t *parser) {
         for (int i = 0; i < dim_count; i++)
             info->array_dimensions[i] = dimensions[i];
 
-        /* Store struct/union tag name for semantic lookup */
+        /* Store struct/union tag name or resolve typedef struct/union tag name */
         if ((data_type == KW_STRUCT || data_type == KW_UNION) && struct_tag_buf[0] != '\0') {
             snprintf(info->struct_tag_name, sizeof(info->struct_tag_name), "%s", struct_tag_buf);
+        } else if (data_type == TK_ID && struct_tag_buf[0] != '\0') {
+            symbol_info_t *tinfo = lookup_global_symbol(parser, struct_tag_buf);
+            if (tinfo && tinfo->kind == SYMBOL_TYPEDEF &&
+                (tinfo->data_type == KW_STRUCT || tinfo->data_type == KW_UNION)) {
+                snprintf(info->struct_tag_name, sizeof(info->struct_tag_name), "%s", tinfo->typedef_base_name);
+            }
         }
 
-        /* Size calculation — use the centralised helper (same as global path) */
-        int total_size = calculate_total_size(data_type, pointer_level, dimensions, dim_count);
+        /* Calculate exact base type size (resolving structs and typedefs) */
+        int base_size = get_base_type_size(data_type, pointer_level);
+        if (pointer_level == 0) {
+            if ((data_type == KW_STRUCT || data_type == KW_UNION) && struct_tag_buf[0] != '\0') {
+                char skey[264];
+                snprintf(skey, sizeof(skey), "%s:%s",
+                         (data_type == KW_STRUCT) ? "struct" : "union",
+                         struct_tag_buf);
+                symbol_info_t *sinfo = lookup_global_symbol(parser, skey);
+                if (sinfo) base_size = sinfo->size_bytes;
+            } else if (data_type == TK_ID && struct_tag_buf[0] != '\0') {
+                symbol_info_t *tinfo = lookup_global_symbol(parser, struct_tag_buf);
+                if (tinfo && tinfo->kind == SYMBOL_TYPEDEF) {
+                    if (tinfo->is_pointer > 0) {
+                        base_size = 8;
+                    } else if (tinfo->data_type == KW_STRUCT || tinfo->data_type == KW_UNION) {
+                        char skey[264];
+                        snprintf(skey, sizeof(skey), "%s:%s",
+                                 (tinfo->data_type == KW_STRUCT) ? "struct" : "union",
+                                 tinfo->typedef_base_name);
+                        symbol_info_t *sinfo = lookup_global_symbol(parser, skey);
+                        if (sinfo) base_size = sinfo->size_bytes;
+                    } else {
+                        base_size = get_base_type_size(tinfo->data_type, 0);
+                    }
+                }
+            }
+        }
 
-        /* B3: if size is 0 and type is struct/union, resolve from the type table */
-        if (total_size == 0 && pointer_level == 0 &&
-            (data_type == KW_STRUCT || data_type == KW_UNION) &&
-            struct_tag_buf[0] != '\0') {
-            char skey[264];
-            snprintf(skey, sizeof(skey), "%s:%s",
-                     (data_type == KW_STRUCT) ? "struct" : "union",
-                     struct_tag_buf);
-            symbol_info_t *sinfo = lookup_global_symbol(parser, skey);
-            if (sinfo) total_size = sinfo->size_bytes;
+        int total_size = base_size;
+        for (int i = 0; i < dim_count; i++) {
+            if (dimensions[i] > 0) total_size *= dimensions[i];
         }
 
         info->size_bytes = total_size;

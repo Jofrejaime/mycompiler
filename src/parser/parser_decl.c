@@ -4,9 +4,6 @@
 #include <string.h>
 
 /* Forward declarations */
-extern int calculate_total_size(int data_type, int is_pointer, 
-                               int *dimensions, int dim_count);
-extern int get_base_type_size(int data_type, int is_pointer);
 void parse_campos_struct_union(parser_t *parser, ast_node_t *parent, int *total_size);
 ast_node_t* parse_declaracao_typedef(parser_t *parser);
 ast_node_t* parse_declaracao_union(parser_t *parser);
@@ -163,6 +160,10 @@ int parse_especificador_tipo_ex(parser_t *parser, char *tag_name_out, size_t out
                 syntax_error(parser, "especificador de tipo esperado (typedef desconhecido)", -1, token);
                 return KW_INT;  /* Default fallback */
             }
+            if (tag_name_out && out_len > 0) {
+                strncpy(tag_name_out, token.lexeme, out_len - 1);
+                tag_name_out[out_len - 1] = '\0';
+            }
             consume_token(parser);
             return TK_ID;
         
@@ -265,23 +266,49 @@ ast_node_t* parse_declaracao_variavel_global(parser_t *parser) {
         for (int i = 0; i < dim_count; i++)
             info->array_dimensions[i] = dimensions[i];
 
-        /* Store struct/union tag name for semantic lookup */
+        /* Store struct/union tag name or resolve typedef struct/union tag name */
         if ((data_type == KW_STRUCT || data_type == KW_UNION) && struct_tag_buf[0] != '\0') {
             snprintf(info->struct_tag_name, sizeof(info->struct_tag_name), "%s", struct_tag_buf);
+        } else if (data_type == TK_ID && struct_tag_buf[0] != '\0') {
+            symbol_info_t *tinfo = lookup_global_symbol(parser, struct_tag_buf);
+            if (tinfo && tinfo->kind == SYMBOL_TYPEDEF &&
+                (tinfo->data_type == KW_STRUCT || tinfo->data_type == KW_UNION)) {
+                snprintf(info->struct_tag_name, sizeof(info->struct_tag_name), "%s", tinfo->typedef_base_name);
+            }
         }
 
-        int total_size = calculate_total_size(data_type, pointer_level, dimensions, dim_count);
+        /* Calculate exact base type size (resolving structs and typedefs) */
+        int base_size = get_base_type_size(data_type, pointer_level);
+        if (pointer_level == 0) {
+            if ((data_type == KW_STRUCT || data_type == KW_UNION) && struct_tag_buf[0] != '\0') {
+                char skey[264];
+                snprintf(skey, sizeof(skey), "%s:%s",
+                         (data_type == KW_STRUCT) ? "struct" : "union",
+                         struct_tag_buf);
+                symbol_info_t *sinfo = lookup_global_symbol(parser, skey);
+                if (sinfo) base_size = sinfo->size_bytes;
+            } else if (data_type == TK_ID && struct_tag_buf[0] != '\0') {
+                symbol_info_t *tinfo = lookup_global_symbol(parser, struct_tag_buf);
+                if (tinfo && tinfo->kind == SYMBOL_TYPEDEF) {
+                    if (tinfo->is_pointer > 0) {
+                        base_size = 8;
+                    } else if (tinfo->data_type == KW_STRUCT || tinfo->data_type == KW_UNION) {
+                        char skey[264];
+                        snprintf(skey, sizeof(skey), "%s:%s",
+                                 (tinfo->data_type == KW_STRUCT) ? "struct" : "union",
+                                 tinfo->typedef_base_name);
+                        symbol_info_t *sinfo = lookup_global_symbol(parser, skey);
+                        if (sinfo) base_size = sinfo->size_bytes;
+                    } else {
+                        base_size = get_base_type_size(tinfo->data_type, 0);
+                    }
+                }
+            }
+        }
 
-        /* B3: if size is 0 and type is struct/union, resolve from the type table */
-        if (total_size == 0 && pointer_level == 0 &&
-            (data_type == KW_STRUCT || data_type == KW_UNION) &&
-            struct_tag_buf[0] != '\0') {
-            char skey[264];
-            snprintf(skey, sizeof(skey), "%s:%s",
-                     (data_type == KW_STRUCT) ? "struct" : "union",
-                     struct_tag_buf);
-            symbol_info_t *sinfo = lookup_global_symbol(parser, skey);
-            if (sinfo) total_size = sinfo->size_bytes;
+        int total_size = base_size;
+        for (int i = 0; i < dim_count; i++) {
+            if (dimensions[i] > 0) total_size *= dimensions[i];
         }
 
         info->size_bytes = total_size;
@@ -371,7 +398,8 @@ void parse_lista_parametros(parser_t *parser, ast_node_t *func_node,
             break;
         }
 
-        int param_type = parse_especificador_tipo(parser);
+        char struct_tag_buf[64] = "";
+        int param_type = parse_especificador_tipo_ex(parser, struct_tag_buf, sizeof(struct_tag_buf));
         int pointer_level = parse_asteriscos(parser);
 
         /* Name is optional (prototype without parameter names) */
@@ -416,7 +444,52 @@ void parse_lista_parametros(parser_t *parser, ast_node_t *func_node,
             param_info->variable_type = VAR_PARAMETER;
             param_info->scope_id      = parser->current_local_table->scope_id;
             param_info->is_array      = is_array;
-            param_info->size_bytes    = (pointer_level > 0) ? 8 : 4;
+
+            /* Store struct/union tag name or resolve typedef struct/union tag name */
+            if ((param_type == KW_STRUCT || param_type == KW_UNION) && struct_tag_buf[0] != '\0') {
+                snprintf(param_info->struct_tag_name, sizeof(param_info->struct_tag_name), "%s", struct_tag_buf);
+            } else if (param_type == TK_ID && struct_tag_buf[0] != '\0') {
+                symbol_info_t *tinfo = lookup_global_symbol(parser, struct_tag_buf);
+                if (tinfo && tinfo->kind == SYMBOL_TYPEDEF &&
+                    (tinfo->data_type == KW_STRUCT || tinfo->data_type == KW_UNION)) {
+                    snprintf(param_info->struct_tag_name, sizeof(param_info->struct_tag_name), "%s", tinfo->typedef_base_name);
+                }
+            }
+
+            /* Calculate exact base type size (resolving structs and typedefs) */
+            int base_size = get_base_type_size(param_type, pointer_level);
+            if (pointer_level == 0) {
+                if ((param_type == KW_STRUCT || param_type == KW_UNION) && struct_tag_buf[0] != '\0') {
+                    char skey[264];
+                    snprintf(skey, sizeof(skey), "%s:%s",
+                             (param_type == KW_STRUCT) ? "struct" : "union",
+                             struct_tag_buf);
+                    symbol_info_t *sinfo = lookup_global_symbol(parser, skey);
+                    if (sinfo) base_size = sinfo->size_bytes;
+                } else if (param_type == TK_ID && struct_tag_buf[0] != '\0') {
+                    symbol_info_t *tinfo = lookup_global_symbol(parser, struct_tag_buf);
+                    if (tinfo && tinfo->kind == SYMBOL_TYPEDEF) {
+                        if (tinfo->is_pointer > 0) {
+                            base_size = 8;
+                        } else if (tinfo->data_type == KW_STRUCT || tinfo->data_type == KW_UNION) {
+                            char skey[264];
+                            snprintf(skey, sizeof(skey), "%s:%s",
+                                     (tinfo->data_type == KW_STRUCT) ? "struct" : "union",
+                                     tinfo->typedef_base_name);
+                            symbol_info_t *sinfo = lookup_global_symbol(parser, skey);
+                            if (sinfo) base_size = sinfo->size_bytes;
+                        } else {
+                            base_size = get_base_type_size(tinfo->data_type, 0);
+                        }
+                    }
+                }
+            }
+
+            int param_size = base_size;
+            for (int i = 0; i < dim_count; i++) {
+                if (dimensions[i] > 0) param_size *= dimensions[i];
+            }
+            param_info->size_bytes = param_size;
 
             param_info->memory_address =
                 scope_allocate_memory(parser->current_local_table, param_info->size_bytes);
@@ -546,19 +619,30 @@ ast_node_t* parse_declaracao_struct(parser_t *parser) {
         
         /* Add struct to global symbol table with "struct:" prefix to avoid
            namespace collision with typedef aliases (e.g., typedef struct Ponto Ponto) */
-        symbol_info_t *struct_info = (symbol_info_t*)calloc(1, sizeof(symbol_info_t));
-        struct_info->data_type = KW_STRUCT;
-        struct_info->kind = SYMBOL_STRUCT;
-        struct_info->variable_type = VAR_GLOBAL;
-        struct_info->scope_id = 0;
-        struct_info->size_bytes = total_size;
-        struct_info->is_struct_or_union = 1;
-        
-        attach_struct_fields(struct_info, struct_decl);
-        /* Key: "struct:TAG" — keeps struct tag namespace separate from variable/typedef namespace */
         char struct_key[264];
         snprintf(struct_key, sizeof(struct_key), "struct:%s", struct_name);
-        add_global_symbol(parser, struct_key, struct_info);
+        
+        symbol_info_t *existing = lookup_global_symbol(parser, struct_key);
+        if (existing) {
+            existing->size_bytes = total_size;
+            if (existing->fields) {
+                free(existing->fields);
+                existing->fields = NULL;
+            }
+            attach_struct_fields(existing, struct_decl);
+            existing->is_struct_or_union = 1;
+        } else {
+            symbol_info_t *struct_info = (symbol_info_t*)calloc(1, sizeof(symbol_info_t));
+            struct_info->data_type = KW_STRUCT;
+            struct_info->kind = SYMBOL_STRUCT;
+            struct_info->variable_type = VAR_GLOBAL;
+            struct_info->scope_id = 0;
+            struct_info->size_bytes = total_size;
+            struct_info->is_struct_or_union = 1;
+            
+            attach_struct_fields(struct_info, struct_decl);
+            add_global_symbol(parser, struct_key, struct_info);
+        }
     } else {
         /* Forward declaration or reference */
         expect(parser, SYM_SEMICOLON);
@@ -744,18 +828,30 @@ ast_node_t* parse_declaracao_union(parser_t *parser) {
         expect(parser, SYM_SEMICOLON);  // Consume ';'
         
         /* Add union to global symbol table with "union:" prefix */
-        symbol_info_t *union_info = (symbol_info_t*)calloc(1, sizeof(symbol_info_t));
-        union_info->data_type = KW_UNION;
-        union_info->kind = SYMBOL_UNION;
-        union_info->variable_type = VAR_GLOBAL;
-        union_info->scope_id = 0;
-        union_info->size_bytes = max_size;
-        union_info->is_struct_or_union = 1;
-
-        attach_struct_fields(union_info, union_decl);
         char union_key[264];
         snprintf(union_key, sizeof(union_key), "union:%s", union_name);
-        add_global_symbol(parser, union_key, union_info);
+        
+        symbol_info_t *existing = lookup_global_symbol(parser, union_key);
+        if (existing) {
+            existing->size_bytes = max_size;
+            if (existing->fields) {
+                free(existing->fields);
+                existing->fields = NULL;
+            }
+            attach_struct_fields(existing, union_decl);
+            existing->is_struct_or_union = 1;
+        } else {
+            symbol_info_t *union_info = (symbol_info_t*)calloc(1, sizeof(symbol_info_t));
+            union_info->data_type = KW_UNION;
+            union_info->kind = SYMBOL_UNION;
+            union_info->variable_type = VAR_GLOBAL;
+            union_info->scope_id = 0;
+            union_info->size_bytes = max_size;
+            union_info->is_struct_or_union = 1;
+            
+            attach_struct_fields(union_info, union_decl);
+            add_global_symbol(parser, union_key, union_info);
+        }
     } else {
         /* Forward declaration or reference */
         expect(parser, SYM_SEMICOLON);
@@ -846,10 +942,40 @@ ast_node_t* parse_declaracao_typedef(parser_t *parser) {
                 type_node->data.decl.name,
                 sizeof(type_info->typedef_base_name) - 1);
     }
-    /* Inherit field table from the base struct/union if it was defined inline */
+    /* Inherit field table from the base struct/union if it was defined inline,
+       and register the tag in its own struct/union namespace */
     if (type_node && (base_type == KW_STRUCT || base_type == KW_UNION)) {
         attach_struct_fields(type_info, type_node);
         type_info->is_struct_or_union = 1;
+
+        if (type_node->data.decl.name && strcmp(type_node->data.decl.name, "(anonymous)") != 0) {
+            symbol_info_t *tag_info = (symbol_info_t*)calloc(1, sizeof(symbol_info_t));
+            tag_info->data_type = base_type;
+            tag_info->kind = (base_type == KW_STRUCT) ? SYMBOL_STRUCT : SYMBOL_UNION;
+            tag_info->variable_type = VAR_GLOBAL;
+            tag_info->scope_id = 0;
+            tag_info->is_struct_or_union = 1;
+            attach_struct_fields(tag_info, type_node);
+            
+            /* Recalculate total struct size by summing member sizes */
+            int total_sz = 0;
+            for (int i = 0; i < tag_info->field_count; i++) {
+                total_sz += tag_info->fields[i].size_bytes;
+            }
+            tag_info->size_bytes = total_sz;
+            type_info->size_bytes = total_sz;
+
+            char tag_key[264];
+            snprintf(tag_key, sizeof(tag_key), "%s:%s",
+                     (base_type == KW_STRUCT) ? "struct" : "union",
+                     type_node->data.decl.name);
+                     
+            if (!lookup_global_symbol(parser, tag_key)) {
+                add_global_symbol(parser, tag_key, tag_info);
+            } else {
+                free(tag_info);
+            }
+        }
     }
     
     if (!add_global_symbol(parser, new_type_name.lexeme, type_info)) {

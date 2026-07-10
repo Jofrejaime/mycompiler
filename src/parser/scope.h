@@ -181,6 +181,8 @@ int scope_allocate_memory(scope_t *scope, int size);
    ============================================================================ */
 
 const char* type_to_string(int type);
+int get_base_type_size(int data_type, int is_pointer);
+int calculate_total_size(int data_type, int is_pointer, int *dimensions, int dim_count);
 
 struct_field_t* lookup_struct_field(struct parser_s *parser,
                                     const char *struct_name,
