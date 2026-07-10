@@ -1,6 +1,8 @@
 #include "parser.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stddef.h>
 
 extern int calculate_total_size(int data_type, int is_pointer,
                                 int *dimensions, int dim_count);
@@ -460,7 +462,8 @@ ast_node_t* parse_instrucao(parser_t *parser) {
    Declarator → TK_ID (SYM_LBRACKET TK_NUM_INT SYM_RBRACKET)* (OP_ASSIGN Expressao)?
 */
 ast_node_t* parse_declaracao_local(parser_t *parser) {
-    int data_type = parse_especificador_tipo(parser);
+    char struct_tag_buf[64] = "";
+    int data_type = parse_especificador_tipo_ex(parser, struct_tag_buf, sizeof(struct_tag_buf));
 
     ast_node_t *first_decl = NULL;  /* First VAR_DECL node (returned when only one declarator) */
     ast_node_t *wrapper    = NULL;  /* AST_BLOCK wrapper, only created when > 1 declarator */
@@ -507,13 +510,33 @@ ast_node_t* parse_declaracao_local(parser_t *parser) {
         for (int i = 0; i < dim_count; i++)
             info->array_dimensions[i] = dimensions[i];
 
+        /* Store struct/union tag name for semantic lookup */
+        if ((data_type == KW_STRUCT || data_type == KW_UNION) && struct_tag_buf[0] != '\0') {
+            snprintf(info->struct_tag_name, sizeof(info->struct_tag_name), "%s", struct_tag_buf);
+        }
+
         /* Size calculation — use the centralised helper (same as global path) */
         int total_size = calculate_total_size(data_type, pointer_level, dimensions, dim_count);
+
+        /* B3: if size is 0 and type is struct/union, resolve from the type table */
+        if (total_size == 0 && pointer_level == 0 &&
+            (data_type == KW_STRUCT || data_type == KW_UNION) &&
+            struct_tag_buf[0] != '\0') {
+            char skey[264];
+            snprintf(skey, sizeof(skey), "%s:%s",
+                     (data_type == KW_STRUCT) ? "struct" : "union",
+                     struct_tag_buf);
+            symbol_info_t *sinfo = lookup_global_symbol(parser, skey);
+            if (sinfo) total_size = sinfo->size_bytes;
+        }
+
         info->size_bytes = total_size;
 
         if (parser->current_local_table) {
             info->memory_address = scope_allocate_memory(parser->current_local_table, total_size);
-            add_local_symbol(parser, id_token.lexeme, info);
+            if (!add_local_symbol(parser, id_token.lexeme, info)) {
+                report_redeclaration(parser, id_token.lexeme, id_token);
+            }
             enrich_symbol_type(parser, id_token.lexeme, data_type, pointer_level);
             enrich_symbol_scope(parser, id_token.lexeme, info->scope_id, VAR_LOCAL);
             enrich_symbol_memory(parser, id_token.lexeme, info->memory_address, total_size);

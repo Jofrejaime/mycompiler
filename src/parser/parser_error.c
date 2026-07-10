@@ -65,6 +65,21 @@ void synchronize(parser_t *parser) {
     }
 
     /*
+       Recuperação por ponto de sincronização: se JÁ estamos no início de uma
+       declaração (ex.: ';' em falta antes de 'int'/'char'/'struct'/...), NÃO
+       descartar esse token — deixá-lo para o chamador re-analisar. Sem isto, um
+       único ';' em falta engole a palavra-chave da próxima declaração e cascateia
+       em dezenas de erros (o parser chega a sair do corpo da função).
+
+       Só se aplica a tokens de início de declaração (nunca TK_ID): estes são
+       sempre consumidos pelo chamador (declaração global ou local), logo não há
+       risco de loop infinito.
+    */
+    if (is_decl_start_token(peek_token(parser).tipo)) {
+        return;
+    }
+
+    /*
        Panic-mode recovery:
        Consume tokens until we hit a synchronisation point:
          - '}' or EOF  → stop WITHOUT consuming (caller needs it)
@@ -202,6 +217,26 @@ void syntax_error(parser_t *parser, const char *message, int expected_type, toke
 
     /* Basic panic-mode recovery: skip to statement boundary */
     panic_mode_recovery(parser);
+}
+
+void report_redeclaration(parser_t *parser, const char *name, token_t found) {
+    if (!parser) {
+        return;
+    }
+
+    parser->error_count++;
+
+    /* Erro não-pânico: a declaração está sintaticamente correcta, por isso não
+       accionamos recuperação nem suprimimos erros seguintes. */
+    const char *path = parser->source_path ? parser->source_path : "<unknown>";
+
+    fprintf(stderr,
+            "%s%s:%d:%d:%s %serror:%s redeclaração de '%s'\n",
+            ANSI_BOLD, path, found.linha, found.coluna, ANSI_RESET,
+            ANSI_RED ANSI_BOLD, ANSI_RESET,
+            name ? name : "<anónimo>");
+
+    print_error_context(parser, found);
 }
 
 void panic_mode_recovery(parser_t *parser) {

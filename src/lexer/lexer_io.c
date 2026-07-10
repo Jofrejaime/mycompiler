@@ -31,7 +31,12 @@ char ler_caractere(lexer_t *lexer) {
     
     if (lexer->teve_retracao) {
         lexer->teve_retracao = 0;
-        return lexer->caractere_retratado;
+        char c = lexer->caractere_retratado;
+        /* Re-aplica o avanço de posição: volta_caractere() reverteu a posição ao
+           empilhar o caractere, portanto relê-lo tem de voltar a avançar (simétrico),
+           senão cada retracção perde permanentemente uma coluna/linha. */
+        update_position(lexer, c);
+        return c;
     }
     
     if (lexer->pos_buffer >= lexer->tamanho_buffer) {

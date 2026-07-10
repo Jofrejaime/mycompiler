@@ -250,11 +250,8 @@ void free_ast(ast_node_t *node);
    FUNÇÕES DE IMPRESSÃO (DEBUG)
    ============================================================================ */
 
-#ifdef DEBUG_AST
+/* Sempre disponível: a impressão é controlada em runtime pela flag CLI --ast. */
 void print_ast(ast_node_t *node, int indent);
-#else
-static inline void print_ast(ast_node_t *node, int indent) { (void)node; (void)indent; }
-#endif
 
 const char* ast_node_type_name(node_type_t type);
 

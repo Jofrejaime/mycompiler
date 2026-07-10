@@ -231,6 +231,7 @@
 
 <pos_fixo_r> ::= SYM_LBRACKET <expressao> SYM_RBRACKET <pos_fixo_r>
                | SYM_DOT TK_ID <pos_fixo_r>
+               | OP_ARROW TK_ID <pos_fixo_r>
                | SYM_LPAREN <argumentos_opcionais> SYM_RPAREN <pos_fixo_r>
                | OP_INC <pos_fixo_r>
                | OP_DEC <pos_fixo_r>

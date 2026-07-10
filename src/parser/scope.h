@@ -55,6 +55,8 @@ typedef struct symbol_info_s {
    int field_count;                 /* Number of fields */
    /* Typedef base name (for typedef → struct resolution) */
    char typedef_base_name[64];      /* e.g. "Node" for typedef struct Node Node_t */
+   /* Struct/union tag name for variable declarations: "Ponto" for struct Ponto p */
+   char struct_tag_name[64];        /* set when data_type == KW_STRUCT or KW_UNION */
    /* Constant initializer (set only when initializer is a single literal) */
    int has_const_init;              /* 1 if constant value is known at parse time */
    union {
@@ -187,19 +189,13 @@ struct_field_t* lookup_struct_field(struct parser_s *parser,
 void try_set_const_init(symbol_info_t *info, struct ast_node_s *init_node);
 
 /* ============================================================================
-   FUNÇÕES DE IMPRESSÃO (apenas com -DDEBUG_SYMBOLS)
+   FUNÇÕES DE IMPRESSÃO (controladas em runtime pela flag CLI --symbols)
    ============================================================================ */
 
-#ifdef DEBUG_SYMBOLS
+/* Sempre disponíveis: a impressão é controlada em runtime pela flag CLI --symbols. */
 void print_symbol_info(symbol_info_t *info);
 void print_scope(scope_t *scope);
 void print_all_scopes(parser_t *parser);
 void print_scope_stack(scope_t **scope_stack, int stack_size);
-#else
-static inline void print_symbol_info(symbol_info_t *i)        { (void)i; }
-static inline void print_scope(scope_t *s)                    { (void)s; }
-static inline void print_all_scopes(parser_t *p)              { (void)p; }
-static inline void print_scope_stack(scope_t **s, int n)      { (void)s; (void)n; }
-#endif
 
 #endif /* SCOPE_H */

@@ -114,8 +114,11 @@ static int is_typedef_name(parser_t *parser, const char *name);
                      | KW_STRUCT [TK_ID] [corpo_campos]
                      | KW_UNION [TK_ID] [corpo_campos]
                      | TK_ID (typedef'd type)
+
+   Extended variant: if tag_name_out != NULL and out_len > 0, the struct/union
+   tag name is written there (e.g. "Ponto" for "struct Ponto").
 */
-int parse_especificador_tipo(parser_t *parser) {
+int parse_especificador_tipo_ex(parser_t *parser, char *tag_name_out, size_t out_len) {
     token_t token = peek_token(parser);
     
     switch (token.tipo) {
@@ -130,7 +133,12 @@ int parse_especificador_tipo(parser_t *parser) {
         case KW_STRUCT: {
             consume_token(parser);  // Consume 'struct'
             if (match(parser, TK_ID)) {
-                expect(parser, TK_ID);  // Struct name
+                token_t tag_tok = peek_token(parser);
+                if (tag_name_out && out_len > 0) {
+                    strncpy(tag_name_out, tag_tok.lexeme, out_len - 1);
+                    tag_name_out[out_len - 1] = '\0';
+                }
+                expect(parser, TK_ID);  // Consume struct tag name
             }
             /* Note: Could be struct {...} but that's handled elsewhere */
             return KW_STRUCT;
@@ -139,7 +147,12 @@ int parse_especificador_tipo(parser_t *parser) {
         case KW_UNION: {
             consume_token(parser);  // Consume 'union'
             if (match(parser, TK_ID)) {
-                expect(parser, TK_ID);  // Union name
+                token_t tag_tok = peek_token(parser);
+                if (tag_name_out && out_len > 0) {
+                    strncpy(tag_name_out, tag_tok.lexeme, out_len - 1);
+                    tag_name_out[out_len - 1] = '\0';
+                }
+                expect(parser, TK_ID);  // Consume union tag name
             }
             return KW_UNION;
         }
@@ -157,6 +170,11 @@ int parse_especificador_tipo(parser_t *parser) {
             syntax_error(parser, "especificador de tipo esperado", -1, token);
             return KW_INT;  /* Default fallback */
     }
+}
+
+/* Backward-compatible wrapper: no tag capture */
+int parse_especificador_tipo(parser_t *parser) {
+    return parse_especificador_tipo_ex(parser, NULL, 0);
 }
 
 /*
@@ -200,7 +218,8 @@ int is_type_specifier(parser_t *parser, token_t token) {
    Declarator → [Asteriscos] TK_ID (SYM_LBRACKET Expressao? SYM_RBRACKET)* (OP_ASSIGN Expressao)?
 */
 ast_node_t* parse_declaracao_variavel_global(parser_t *parser) {
-    int data_type = parse_especificador_tipo(parser);
+    char struct_tag_buf[64] = "";
+    int data_type = parse_especificador_tipo_ex(parser, struct_tag_buf, sizeof(struct_tag_buf));
 
     ast_node_t *first_decl = NULL;  /* First VAR_DECL (returned directly when only one) */
     ast_node_t *wrapper    = NULL;  /* AST_BLOCK wrapper, created on second declarator */
@@ -246,13 +265,33 @@ ast_node_t* parse_declaracao_variavel_global(parser_t *parser) {
         for (int i = 0; i < dim_count; i++)
             info->array_dimensions[i] = dimensions[i];
 
+        /* Store struct/union tag name for semantic lookup */
+        if ((data_type == KW_STRUCT || data_type == KW_UNION) && struct_tag_buf[0] != '\0') {
+            snprintf(info->struct_tag_name, sizeof(info->struct_tag_name), "%s", struct_tag_buf);
+        }
+
         int total_size = calculate_total_size(data_type, pointer_level, dimensions, dim_count);
+
+        /* B3: if size is 0 and type is struct/union, resolve from the type table */
+        if (total_size == 0 && pointer_level == 0 &&
+            (data_type == KW_STRUCT || data_type == KW_UNION) &&
+            struct_tag_buf[0] != '\0') {
+            char skey[264];
+            snprintf(skey, sizeof(skey), "%s:%s",
+                     (data_type == KW_STRUCT) ? "struct" : "union",
+                     struct_tag_buf);
+            symbol_info_t *sinfo = lookup_global_symbol(parser, skey);
+            if (sinfo) total_size = sinfo->size_bytes;
+        }
+
         info->size_bytes = total_size;
 
         info->memory_address = parser->next_global_address;
         parser->next_global_address += total_size;
 
-        add_global_symbol(parser, id_token.lexeme, info);
+        if (!add_global_symbol(parser, id_token.lexeme, info)) {
+            report_redeclaration(parser, id_token.lexeme, id_token);
+        }
         enrich_symbol_type(parser, id_token.lexeme, data_type, pointer_level);
         enrich_symbol_scope(parser, id_token.lexeme, 0, VAR_GLOBAL);
         enrich_symbol_memory(parser, id_token.lexeme, info->memory_address, total_size);
@@ -261,6 +300,7 @@ ast_node_t* parse_declaracao_variavel_global(parser_t *parser) {
         /* Store literal constant value if initializer is a simple literal */
         if (var_decl->data.decl.initializer)
             try_set_const_init(info, var_decl->data.decl.initializer);
+
 
         /* Accumulate nodes */
         if (decl_count == 0) {
@@ -458,6 +498,9 @@ ast_node_t* parse_declaracao_funcao(parser_t *parser, int return_type) {
     func_info->size_bytes = 0;  /* Functions don't have size */
     func_info->memory_address = 0;  /* Functions have code addresses, not data */
     
+    /* NOTA: não reportamos redeclaração de funções aqui — protótipo seguido de
+       definição (mesmo nome duas vezes) é legal em C. Distinguir protótipo de
+       definição e validar assinaturas pertence à fase de análise semântica. */
     add_global_symbol(parser, name_tok.lexeme, func_info);
 
     enrich_symbol_type(parser, name_tok.lexeme, return_type, pointer_level);
@@ -501,7 +544,8 @@ ast_node_t* parse_declaracao_struct(parser_t *parser) {
         expect(parser, SYM_RBRACE);  // Consume '}'
         expect(parser, SYM_SEMICOLON);  // Consume ';'
         
-        /* Add struct to global symbol table */
+        /* Add struct to global symbol table with "struct:" prefix to avoid
+           namespace collision with typedef aliases (e.g., typedef struct Ponto Ponto) */
         symbol_info_t *struct_info = (symbol_info_t*)calloc(1, sizeof(symbol_info_t));
         struct_info->data_type = KW_STRUCT;
         struct_info->kind = SYMBOL_STRUCT;
@@ -511,7 +555,10 @@ ast_node_t* parse_declaracao_struct(parser_t *parser) {
         struct_info->is_struct_or_union = 1;
         
         attach_struct_fields(struct_info, struct_decl);
-        add_global_symbol(parser, struct_name, struct_info);
+        /* Key: "struct:TAG" — keeps struct tag namespace separate from variable/typedef namespace */
+        char struct_key[264];
+        snprintf(struct_key, sizeof(struct_key), "struct:%s", struct_name);
+        add_global_symbol(parser, struct_key, struct_info);
     } else {
         /* Forward declaration or reference */
         expect(parser, SYM_SEMICOLON);
@@ -696,7 +743,7 @@ ast_node_t* parse_declaracao_union(parser_t *parser) {
         expect(parser, SYM_RBRACE);  // Consume '}'
         expect(parser, SYM_SEMICOLON);  // Consume ';'
         
-        /* Add union to global symbol table */
+        /* Add union to global symbol table with "union:" prefix */
         symbol_info_t *union_info = (symbol_info_t*)calloc(1, sizeof(symbol_info_t));
         union_info->data_type = KW_UNION;
         union_info->kind = SYMBOL_UNION;
@@ -706,7 +753,9 @@ ast_node_t* parse_declaracao_union(parser_t *parser) {
         union_info->is_struct_or_union = 1;
 
         attach_struct_fields(union_info, union_decl);
-        add_global_symbol(parser, union_name, union_info);
+        char union_key[264];
+        snprintf(union_key, sizeof(union_key), "union:%s", union_name);
+        add_global_symbol(parser, union_key, union_info);
     } else {
         /* Forward declaration or reference */
         expect(parser, SYM_SEMICOLON);

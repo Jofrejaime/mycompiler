@@ -137,6 +137,9 @@ void expect(parser_t *parser, int token_type);
 /* Detailed syntax error reporting */
 void syntax_error(parser_t *parser, const char *message, int expected_type, token_t found);
 
+/* Redeclaration reporting (non-panic: declaration is syntactically valid) */
+void report_redeclaration(parser_t *parser, const char *name, token_t found);
+
 /* Error recovery (panic mode) */
 void synchronize(parser_t *parser);
 void panic_mode_recovery(parser_t *parser);
@@ -251,6 +254,7 @@ void parse_declaracao_global(parser_t *parser, ast_node_t *program_node);
 
 /* Type specifiers */
 int parse_especificador_tipo(parser_t *parser);
+int parse_especificador_tipo_ex(parser_t *parser, char *tag_name_out, size_t out_len);
 
 /* Statements */
 ast_node_t* parse_bloco(parser_t *parser);

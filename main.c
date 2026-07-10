@@ -103,8 +103,9 @@ int main(int argc, char *argv[]) {
 
     /* Limpeza */
     parser_free(parser);
-    /* symbol_table is freed inside parser_free via token stream;
-       only free the wrapper if not owned by parser */
+    /* O parser NÃO é dono do token stream (apenas o referencia). A posse fica em
+       main, por isso libertamo-lo aqui, depois de o parser deixar de o usar. */
+    liberar_tabla_simbolos(symbol_table);
 
     /* Saída de erro final — apenas se houver erros (silencioso em sucesso) */
     if (errors > 0) {

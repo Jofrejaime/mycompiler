@@ -275,7 +275,6 @@ const char* type_to_string(int type) {
     }
 }
 
-#ifdef DEBUG_SYMBOLS
 static const char* kind_to_string(symbol_info_t *info) {
     if (!info) return "unknown";
     if (info->is_function || info->kind == SYMBOL_FUNCTION) return "function";
@@ -408,7 +407,6 @@ void print_scope_stack(scope_t **scope_stack, int stack_size) {
         printf("\n");
     }
 }
-#endif /* DEBUG_SYMBOLS */
 
 /* ============================================================================
    VALOR LITERAL CONSTANTE
@@ -450,8 +448,23 @@ struct_field_t* lookup_struct_field(parser_t *parser,
                                     const char *field_name) {
     if (!parser || !struct_name || !field_name) return NULL;
 
-    symbol_info_t *info = (symbol_info_t*)scope_lookup_symbol(
-                              parser->global_scope, struct_name);
+    /* Try "struct:TAG" key first (new convention), then "union:TAG", then plain name */
+    symbol_info_t *info = NULL;
+
+    char prefixed[264];
+    snprintf(prefixed, sizeof(prefixed), "struct:%s", struct_name);
+    info = (symbol_info_t*)scope_lookup_symbol(parser->global_scope, prefixed);
+
+    if (!info) {
+        snprintf(prefixed, sizeof(prefixed), "union:%s", struct_name);
+        info = (symbol_info_t*)scope_lookup_symbol(parser->global_scope, prefixed);
+    }
+
+    if (!info) {
+        /* Fallback: plain name (handles typedefs that carry their own fields) */
+        info = (symbol_info_t*)scope_lookup_symbol(parser->global_scope, struct_name);
+    }
+
     if (!info || !info->is_struct_or_union || !info->fields) return NULL;
 
     for (int i = 0; i < info->field_count; i++) {

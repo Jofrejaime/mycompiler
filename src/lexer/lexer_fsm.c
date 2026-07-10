@@ -73,6 +73,7 @@ typedef enum {
     Q20_OP_LT,          /* Operador < */
     Q21_OP_GT,          /* Operador > */
     Q22_OP_BITNOT,      /* Operador ~ (NOT bit-wise) */
+    Q_OP_MULT,          /* Operador * e *= */
     Q25_OP_AND_ASSIGN,  /* Operador &= */
     Q26_OP_OR_ASSIGN,   /* Operador |= */
     Q27_OP_XOR_ASSIGN,  /* Operador ^= */
@@ -87,7 +88,12 @@ typedef enum {
     Q34_RESERVED,       /* Reservado */
     
     /* G9 - Pré-processador */
-    Q35_PP_DIRECTIVE    /* Dentro de diretiva #... */
+    Q35_PP_DIRECTIVE,   /* Dentro de diretiva #... */
+
+    /* G3 - Expoente (notação científica: 1.5e3, 2E-4) */
+    Q_EXP_E,            /* Após 'e' ou 'E' em número */
+    Q_EXP_SIGN,         /* Após sinal +/- do expoente */
+    Q_EXP_DIGITS        /* Dígitos do expoente */
 } Estado_FSM;
 
 /* ============================================================================
@@ -106,12 +112,17 @@ token_t fsm_next_token(lexer_t *lexer) {
     int buffer_pos = 0;
     char buffer[256];
     memset(buffer, 0, sizeof(buffer));
-    
-    lexer->linha_inicio_lexema = lexer->linha;
-    lexer->coluna_inicio_lexema = lexer->coluna;
-    
+
     char c;
     while (1) {
+        /* Captura a posição de início do lexema no momento em que começamos a
+           reconhecê-lo. Em Q0 o buffer está sempre vazio; whitespace/comentários
+           fazem volta_caractere e regressam a Q0, pelo que esta re-captura fixa a
+           posição do PRIMEIRO caractere real do lexema (e não a do token anterior). */
+        if (estado == Q0_INICIAL) {
+            lexer->linha_inicio_lexema = lexer->linha;
+            lexer->coluna_inicio_lexema = lexer->coluna;
+        }
         c = ler_caractere(lexer);
         
         switch (estado) {
@@ -172,8 +183,7 @@ token_t fsm_next_token(lexer_t *lexer) {
                 return RETURN_TOKEN(lexer, OP_BITNOT, "~");
             }
             else if (c == '*') {
-                buffer[0] = c;
-                return RETURN_TOKEN(lexer, OP_MULT, "*");
+                estado = Q_OP_MULT;
             }
             else if (c == '%') {
                 buffer[0] = c;
@@ -248,6 +258,10 @@ token_t fsm_next_token(lexer_t *lexer) {
             } else if (c == '.') {
                 if (buffer_pos < 255) buffer[buffer_pos++] = c;
                 estado = Q5_FLOAT;
+            } else if (c == 'e' || c == 'E') {
+                /* Notação científica: 2e3, 1E10 */
+                if (buffer_pos < 255) buffer[buffer_pos++] = c;
+                estado = Q_EXP_E;
             } else {
                 volta_caractere(lexer, c);
                 buffer[buffer_pos] = '\0';
@@ -261,10 +275,64 @@ token_t fsm_next_token(lexer_t *lexer) {
         case Q5_FLOAT:
             if (isdigit(c)) {
                 if (buffer_pos < 255) buffer[buffer_pos++] = c;
+            } else if (c == 'e' || c == 'E') {
+                /* Notação científica: 1.5e3, 3.14E-2 */
+                if (buffer_pos < 255) buffer[buffer_pos++] = c;
+                estado = Q_EXP_E;
             } else {
                 volta_caractere(lexer, c);
                 buffer[buffer_pos] = '\0';
                 return RETURN_TOKEN(lexer, TK_NUM_FLOAT, buffer);
+            }
+            break;
+        
+        /* ═════════════════════════════════════════════════════════════════ */
+        /* G3: NOTAÇÃO CIENTÍFICA — estados de expoente                    */
+        /* ═════════════════════════════════════════════════════════════════ */
+        case Q_EXP_E:
+            /* Após 'e'/'E': aceita sinal opcional ou dígito imediato */
+            if (c == '+' || c == '-') {
+                if (buffer_pos < 255) buffer[buffer_pos++] = c;
+                estado = Q_EXP_SIGN;
+            } else if (isdigit(c)) {
+                if (buffer_pos < 255) buffer[buffer_pos++] = c;
+                estado = Q_EXP_DIGITS;
+            } else {
+                /* 'e'/'E' sem dígitos — não é expoente válido.
+                   Emite o número sem o 'e' e devolve 'e' e o char actual ao stream. */
+                buffer_pos--;              /* apaga o 'e'/'E' do buffer */
+                buffer[buffer_pos] = '\0';
+                volta_caractere(lexer, c); /* devolve o char actual */
+                /* Nota: o 'e'/'E' será relido como início de identificador */
+                int has_dot = 0;
+                for (int i = 0; i < buffer_pos; i++) {
+                    if (buffer[i] == '.') { has_dot = 1; break; }
+                }
+                return RETURN_TOKEN(lexer, has_dot ? TK_NUM_FLOAT : TK_NUM_INT, buffer);
+            }
+            break;
+
+        case Q_EXP_SIGN:
+            /* Após sinal do expoente: obrigatório pelo menos um dígito */
+            if (isdigit(c)) {
+                if (buffer_pos < 255) buffer[buffer_pos++] = c;
+                estado = Q_EXP_DIGITS;
+            } else {
+                /* Sinal sem dígitos — emite o acumulado e retrocede */
+                volta_caractere(lexer, c);
+                buffer[buffer_pos] = '\0';
+                return RETURN_TOKEN(lexer, TK_NUM_EXP, buffer);
+            }
+            break;
+
+        case Q_EXP_DIGITS:
+            /* Dígitos do expoente: continua até não-dígito */
+            if (isdigit(c)) {
+                if (buffer_pos < 255) buffer[buffer_pos++] = c;
+            } else {
+                volta_caractere(lexer, c);
+                buffer[buffer_pos] = '\0';
+                return RETURN_TOKEN(lexer, TK_NUM_EXP, buffer);
             }
             break;
         
@@ -276,8 +344,22 @@ token_t fsm_next_token(lexer_t *lexer) {
                 estado = Q7_COMMENT_LINE;
             } else if (c == '*') {
                 estado = Q9_COMMENT_BLOCK;
+            } else if (c == '=') {
+                return RETURN_TOKEN(lexer, OP_DIV_ASSIGN, "/=");
             } else {
                 BACKTRACK_RETURN(lexer, c, OP_DIV, "/");
+            }
+            break;
+
+
+        /* ═════════════════════════════════════════════════════════════════ */
+        /* Q_OP_MULT: Operador * e *=                                         */
+        /* ═════════════════════════════════════════════════════════════════ */
+        case Q_OP_MULT:
+            if (c == '=') {
+                return RETURN_TOKEN(lexer, OP_MULT_ASSIGN, "*=");
+            } else {
+                BACKTRACK_RETURN(lexer, c, OP_MULT, "*");
             }
             break;
         
@@ -294,6 +376,11 @@ token_t fsm_next_token(lexer_t *lexer) {
         case Q9_COMMENT_BLOCK:
             if (c == '*') {
                 estado = Q10_COMMENT_STAR;
+            } else if (c == '\0') {
+                /* EOF dentro de comentário de bloco — erro, não loop infinito */
+                return (token_t){TK_ERROR, "Comentario de bloco nao fechado",
+                                lexer->linha_inicio_lexema,
+                                lexer->coluna_inicio_lexema, {0}};
             }
             break;
         
@@ -303,6 +390,11 @@ token_t fsm_next_token(lexer_t *lexer) {
                 estado = Q0_INICIAL;
                 buffer_pos = 0;
                 memset(buffer, 0, sizeof(buffer));
+            } else if (c == '\0') {
+                /* EOF logo após '*' — comentário não fechado */
+                return (token_t){TK_ERROR, "Comentario de bloco nao fechado",
+                                lexer->linha_inicio_lexema,
+                                lexer->coluna_inicio_lexema, {0}};
             } else if (c != '*') {
                 estado = Q9_COMMENT_BLOCK;
             }
@@ -317,7 +409,7 @@ token_t fsm_next_token(lexer_t *lexer) {
         /* Operador = e == */
         case Q13_OP_EQ:
             if (c == '=') {
-                return RETURN_TOKEN(lexer, OP_XOR_ASSIGN, "^=");
+                return RETURN_TOKEN(lexer, OP_EQ, "==");
             } else {
                 volta_caractere(lexer, c);
                 return gravar_token_lexema(lexer, OP_ASSIGN, "=",
@@ -399,7 +491,7 @@ token_t fsm_next_token(lexer_t *lexer) {
                                           lexer->linha_inicio_lexema,
                                           lexer->coluna_inicio_lexema);
             } else if (c == '>') {
-                return RETURN_TOKEN(lexer, OP_AND_ASSIGN, "&=");
+                return RETURN_TOKEN(lexer, OP_ARROW, "->");
             } else {
                 volta_caractere(lexer, c);
                 return gravar_token_lexema(lexer, OP_MINUS, "-",
@@ -447,7 +539,20 @@ token_t fsm_next_token(lexer_t *lexer) {
             break;
         
         case Q29_STRING_ESCAPE:
-            if (buffer_pos < 255) buffer[buffer_pos++] = c;
+            /* Traduzir escape sequence para o valor real */
+            switch (c) {
+                case 'n':  buffer[buffer_pos++] = '\n'; break;
+                case 't':  buffer[buffer_pos++] = '\t'; break;
+                case 'r':  buffer[buffer_pos++] = '\r'; break;
+                case '\\': buffer[buffer_pos++] = '\\'; break;
+                case '"':  buffer[buffer_pos++] = '"';  break;
+                case '0':  buffer[buffer_pos++] = '\0'; break;
+                case 'a':  buffer[buffer_pos++] = '\a'; break;
+                case 'b':  buffer[buffer_pos++] = '\b'; break;
+                case 'f':  buffer[buffer_pos++] = '\f'; break;
+                case 'v':  buffer[buffer_pos++] = '\v'; break;
+                default:   buffer[buffer_pos++] = c;    break;
+            }
             estado = Q28_STRING_OPEN;
             break;
         
@@ -464,7 +569,20 @@ token_t fsm_next_token(lexer_t *lexer) {
             break;
         
         case Q31_CHAR_ESCAPE:
-            buffer[buffer_pos++] = c;
+            /* Traduzir escape sequence para o valor real */
+            switch (c) {
+                case 'n':  buffer[buffer_pos++] = '\n'; break;
+                case 't':  buffer[buffer_pos++] = '\t'; break;
+                case 'r':  buffer[buffer_pos++] = '\r'; break;
+                case '\\': buffer[buffer_pos++] = '\\'; break;
+                case '\'': buffer[buffer_pos++] = '\''; break;
+                case '0':  buffer[buffer_pos++] = '\0'; break;
+                case 'a':  buffer[buffer_pos++] = '\a'; break;
+                case 'b':  buffer[buffer_pos++] = '\b'; break;
+                case 'f':  buffer[buffer_pos++] = '\f'; break;
+                case 'v':  buffer[buffer_pos++] = '\v'; break;
+                default:   buffer[buffer_pos++] = c;    break;
+            }
             estado = Q32_CHAR_AWAIT;
             break;
         

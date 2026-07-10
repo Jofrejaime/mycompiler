@@ -20,6 +20,8 @@
 analisador_lexico
 analisador_lexico.exe
 parser.exe
+compilador
+compilador.exe
 
 # ============================================================================
 # ARTEFATOS DE BUILD (SEMPRE IGNORAR)
@@ -37,10 +39,16 @@ Makefile.local
 # ============================================================================
 tabela_simbolos.txt
 saida_*.txt
+saida
+saida[0-9]*
+relatorio
 *.log
 debug.log
 *.tmp
 *.bak
+
+# Ferramentas locais (Claude Code)
+.claude/
 
 # ============================================================================
 # CACHE E TEMPORARIOS (SEMPRE IGNORAR)

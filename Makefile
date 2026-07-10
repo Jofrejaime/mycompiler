@@ -3,8 +3,13 @@
 #
 # Disciplina: Compiladores - M3
 # Projeto: Mini-Compilador C→C
-#   Fase 1: Análise Léxica (✅ Completo)
-#   Fase 2: Análise Sintática (🚧 Em Desenvolvimento)
+#   Fase 1: Análise Léxica    (✅ Completo)
+#   Fase 2: Análise Sintática (✅ Completo)
+#   Fase 3: Análise Semântica (⏳ Por fazer)
+#
+# REQUISITO: este Makefile usa comandos POSIX (mkdir -p, rm -rf). Compilar num
+# shell POSIX — WSL, Git Bash ou MSYS2. No Windows nativo use `mingw32-make`
+# a partir de um shell com sh disponível (não do cmd.exe puro).
 #
 # Compilação:
 #   make              # Compilar normalmente
@@ -101,7 +106,7 @@ $(OBJDIR)/%.o: %.c $(HEADERS)
 
 clean:
 	@echo "Limpando arquivos compilados..."
-	rm -r ./build
+	rm -rf ./build
 	@echo "OK: Limpeza concluida"
 
 debug: CFLAGS += $(DEBUG_FLAGS)
@@ -129,8 +134,9 @@ help:
 	@echo "  help    - Mostrar esta mensagem"
 	@echo ""
 	@echo "Fases do compilador:"
-	@echo "  Fase 1: Análise Léxica (Lexer)    ✅ Completo"
-	@echo "  Fase 2: Análise Sintática (Parser) 🚧 Em Desenvolvimento"
+	@echo "  Fase 1: Análise Léxica (Lexer)      ✅ Completo"
+	@echo "  Fase 2: Análise Sintática (Parser)  ✅ Completo"
+	@echo "  Fase 3: Análise Semântica            ⏳ Por fazer"
 	@echo ""
 	@echo "Arquivos gerados:"
 	@echo "  $(TARGET_PATH)     - Executável do compilador"
