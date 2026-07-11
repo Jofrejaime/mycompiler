@@ -58,6 +58,17 @@ typedef struct semantic_s {
        O parser regista os escopos em DFS (mesma ordem da AST), por isso
        basta avançar este índice cada vez que entramos num bloco. */
     int next_scope_idx;              /* próximo escopo a consumir de all_scopes[] */
+
+    /* Registo de declarações JÁ VISTAS nesta travessia, por (scope_id, nome).
+       A tabela do parser guarda cada nome só uma vez (rejeita duplicados no
+       registo), portanto a redeclaração (alínea b) tem de ser detectada aqui,
+       comparando o que já foi visitado dentro do mesmo escopo. */
+    struct seen_decl_s {
+        int  scope_id;
+        char name[64];
+    } *seen_decls;
+    int seen_count;
+    int seen_cap;
 } semantic_t;
 
 /* ============================================================================
@@ -103,6 +114,13 @@ symbol_info_t* sem_lookup(semantic_t *sem, const char *name);
 
 /* Procurar símbolo apenas no escopo do topo da pilha (escopo actual) */
 int sem_exists_current_scope(semantic_t *sem, const char *name);
+
+/*
+   Registar uma declaração (nome) no escopo actual durante a travessia.
+   Devolve 1 se o nome JÁ tinha sido declarado neste escopo (redeclaração),
+   0 se é a primeira vez. Usado para a alínea b).
+*/
+int sem_mark_declared(semantic_t *sem, const char *name);
 
 /* Empurrar / retirar escopo da pilha semântica */
 void sem_push_scope(semantic_t *sem, scope_t *scope);

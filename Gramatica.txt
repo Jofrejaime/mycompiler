@@ -61,8 +61,18 @@
 <sufixo_array_opcional> ::= SYM_LBRACKET <expressao> SYM_RBRACKET <sufixo_array_opcional>
                           | ε
 
-<inicializacao_opcional> ::= OP_ASSIGN <expressao>
+<inicializacao_opcional> ::= OP_ASSIGN <valor_inicial>
                            | ε
+
+<valor_inicial> ::= <expressao>
+                  | SYM_LBRACE <lista_valores_iniciais> SYM_RBRACE
+
+<lista_valores_iniciais> ::= <valor_inicial> <mais_valores_iniciais>
+                           | ε
+
+<mais_valores_iniciais> ::= SYM_COMMA <valor_inicial> <mais_valores_iniciais>
+                          | SYM_COMMA
+                          | ε
 
 <mais_declaradores> ::= SYM_COMMA <asteriscos> TK_ID <sufixo_array_opcional> <inicializacao_opcional> <mais_declaradores>
                       | ε
@@ -83,7 +93,8 @@
 
 <bloco> ::= SYM_LBRACE <lista_itens_bloco> SYM_RBRACE
 
-<lista_itens_bloco> ::= <item_bloco> <lista_itens_bloco>
+<lista_itens_bloco> ::= <ite
+m_bloco> <lista_itens_bloco>
                       | ε
 
 <item_bloco> ::= <declaracao_variavel_local>
@@ -101,8 +112,11 @@
               | <instrucao_continue>
               | <instrucao_return>
               | <instrucao_goto>
+              | <instrucao_rotulo>
               | <bloco>
               | SYM_SEMICOLON
+
+<instrucao_rotulo> ::= TK_ID SYM_COLON <instrucao>
 
 <instrucao_expressao> ::= <expressao> SYM_SEMICOLON
 
@@ -224,7 +238,7 @@
            | KW_SIZEOF <unario_sizeof>
            | <pos_fixo>
 
-<unario_sizeof> ::= SYM_LPAREN <especificador_tipo> SYM_RPAREN
+<unario_sizeof> ::= SYM_LPAREN <especificador_tipo> <asteriscos> SYM_RPAREN
                   | <unario>
 
 <pos_fixo> ::= <primario> <pos_fixo_r>

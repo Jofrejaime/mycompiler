@@ -47,6 +47,7 @@ typedef struct symbol_info_s {
    int is_function;
    int function_return_type;
    int function_param_types[32];
+   int function_param_is_pointer[32];   /* nível de ponteiro de cada parâmetro */
    int function_param_count;
    int is_typedef;
    /* Struct/union fields table */

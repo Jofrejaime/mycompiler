@@ -118,6 +118,18 @@ executar_teste "$TESTS_DIR/sem07_controlo.c" \
     "1+"
 
 # -----------------------------------------------------------------------------
+# Teste 08: Redeclaração de parâmetro e multi-declarador — alínea b) reforçada
+executar_teste "$TESTS_DIR/sem08_redecl_param.c" \
+    "sem08 | Redeclaração param/local + shadowing OK (alínea b)" \
+    "1+"
+
+# -----------------------------------------------------------------------------
+# Teste 09: Tipos de argumentos com ponteiros/structs — alínea d) reforçada
+executar_teste "$TESTS_DIR/sem09_args_ponteiro.c" \
+    "sem09 | Tipos de argumentos ponteiro/struct (alínea d)" \
+    "1+"
+
+# -----------------------------------------------------------------------------
 echo ""
 echo "============================================================"
 echo " Resultados: $passed/$total passaram, $failed falharam"

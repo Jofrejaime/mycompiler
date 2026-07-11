@@ -33,10 +33,15 @@ static void verificar_decl_variavel(semantic_t *sem, ast_node_t *node) {
     if (tipo_decl == 0) tipo_decl = node->data_type;
 
     /* ------------------------------------------------------------------
-       Alínea b): Verificar redeclaração no escopo actual
+       Alínea b): Verificar redeclaração no MESMO escopo.
+
+       Não podemos usar a tabela do parser (guarda cada nome só uma vez), por
+       isso registamos as declarações já vistas nesta travessia. Se o nome já
+       foi declarado neste escopo, é uma redeclaração.
     ------------------------------------------------------------------ */
-    if (sem_exists_current_scope(sem, nome)) {
-        (void)nome; /* Suprime aviso de variável não utilizada */
+    if (sem_mark_declared(sem, nome)) {
+        sem_error(sem, node->line, node->column,
+                  "variável '%s' redeclarada no mesmo escopo", nome);
     }
 
     /* ------------------------------------------------------------------
@@ -174,6 +179,13 @@ static void verificar_decl_struct(semantic_t *sem, ast_node_t *node) {
 */
 static void verificar_param(semantic_t *sem, ast_node_t *node) {
     if (!node) return;
+
+    /* Alínea b) para parâmetros: dois parâmetros com o mesmo nome. */
+    const char *nome = node->data.decl.name ? node->data.decl.name : node->name;
+    if (nome && sem_mark_declared(sem, nome)) {
+        sem_error(sem, node->line, node->column,
+                  "parâmetro '%s' redeclarado", nome);
+    }
 
     /* Visitar o inicializador se existir (parâmetros raramente têm, mas
        por completude) */

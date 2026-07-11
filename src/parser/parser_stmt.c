@@ -460,7 +460,9 @@ ast_node_t* parse_instrucao(parser_t *parser) {
 */
 ast_node_t* parse_declaracao_local(parser_t *parser) {
     char struct_tag_buf[64] = "";
-    int data_type = parse_especificador_tipo_ex(parser, struct_tag_buf, sizeof(struct_tag_buf));
+    int typedef_ptr = 0;   /* nível de ponteiro embutido no typedef (char* → 1) */
+    int data_type = parse_especificador_tipo_ex(parser, struct_tag_buf,
+                                                sizeof(struct_tag_buf), &typedef_ptr);
 
     ast_node_t *first_decl = NULL;  /* First VAR_DECL node (returned when only one declarator) */
     ast_node_t *wrapper    = NULL;  /* AST_BLOCK wrapper, only created when > 1 declarator */
@@ -468,7 +470,7 @@ ast_node_t* parse_declaracao_local(parser_t *parser) {
 
     do {
         /* Each declarator may have its own pointer stars: int *x, y; */
-        int pointer_level = parse_asteriscos(parser);
+        int pointer_level = parse_asteriscos(parser) + typedef_ptr;
 
         token_t id_token = peek_token(parser);
         expect(parser, TK_ID);  // Consume identifier
@@ -556,9 +558,8 @@ ast_node_t* parse_declaracao_local(parser_t *parser) {
 
         if (parser->current_local_table) {
             info->memory_address = scope_allocate_memory(parser->current_local_table, total_size);
-            if (!add_local_symbol(parser, id_token.lexeme, info)) {
-                report_redeclaration(parser, id_token.lexeme, id_token);
-            }
+            /* Redeclaração (alínea b) é reportada pela fase semântica. */
+            add_local_symbol(parser, id_token.lexeme, info);
             enrich_symbol_type(parser, id_token.lexeme, data_type, pointer_level);
             enrich_symbol_scope(parser, id_token.lexeme, info->scope_id, VAR_LOCAL);
             enrich_symbol_memory(parser, id_token.lexeme, info->memory_address, total_size);
@@ -611,7 +612,7 @@ void parse_lista_instrucoes_declaracoes(parser_t *parser, ast_node_t *parent) {
         if (is_type_specifier(parser, token)) {
             ast_node_t *decl = parse_declaracao_local(parser);
             if (decl) {
-                add_ast_child(parent, decl);
+                add_ast_decl_flat(parent, decl);
             }
         } else {
             /* It's a statement */

@@ -179,6 +179,18 @@ int inferir_is_pointer(semantic_t *sem, ast_node_t *node) {
                 return inferir_is_pointer(sem, node->children[0]);
             }
             return 0;
+        case NODE_BINARY_OP: {
+            /* Operadores relacionais/lógicos → int (não ponteiro). Aritméticos
+               propagam o ponteiro do operando que for ponteiro (ex.: p + 1). */
+            int op = node->data.expr.operator;
+            if (op == OP_EQ || op == OP_NE || op == OP_LT || op == OP_LE ||
+                op == OP_GT || op == OP_GE || op == OP_AND || op == OP_OR) {
+                return 0;
+            }
+            int pe = inferir_is_pointer(sem, node->data.expr.left);
+            int pd = inferir_is_pointer(sem, node->data.expr.right);
+            return (pe > pd) ? pe : pd;
+        }
         case NODE_CALL: {
             if (node->child_count < 1) return 0;
             ast_node_t *fn = node->children[0];
@@ -250,7 +262,7 @@ static void verificar_chamada_funcao(semantic_t *sem, ast_node_t *node) {
         int tipo_arg    = inferir_tipo(sem, arg);
         int ptr_arg     = inferir_is_pointer(sem, arg);
         int tipo_param  = info->function_param_types[i];
-        int ptr_param   = 0; /* o parser não armazena is_pointer dos params */
+        int ptr_param   = info->function_param_is_pointer[i];
 
         if (tipo_arg == -1) continue; /* tipo desconhecido — erro já reportado */
 

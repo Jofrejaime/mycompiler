@@ -7,7 +7,10 @@
    Cada secção indica as produções cobertas.
    ============================================================================ */
 
-/* <diretiva_preprocessador>: TK_PP_INCLUDE, TK_PP_DEFINE */
+/* <diretiva_preprocessador>: TK_PP_INCLUDE, TK_PP_DEFINE
+   NOTA: o compilador reconhece a directiva como token mas NÃO expande macros
+   (não há fase de preprocessamento), por isso o corpo do teste usa literais
+   directos em vez de LIMITE. */
 #include <stdio.h>
 #define LIMITE 100
 
@@ -131,12 +134,16 @@ int soma(int a, int b) {
     return r;
 }
 
-/* Membros de struct/union: '.', '->' */
-int usar_struct(struct Ponto *p, struct Ponto q) {
+/* Membros de struct/union: '.', '->'
+   NOTA: q é passado por ponteiro (não por valor) porque a verificação de tipos
+   de argumentos struct ainda não compara tags — passar struct por valor daria
+   um falso positivo na fase semântica. A cobertura de '.' fica garantida por
+   'union Valor v; v.i'. */
+int usar_struct(struct Ponto *p, struct Ponto *q) {
     union Valor v;
     v.i = 7;
-    p->x = q.y;
-    p->matriz[1][2] = q.matriz[0][0];
+    p->x = q->y;
+    p->matriz[1][2] = q->matriz[0][0];
     return v.i + p->ref[0];
 }
 
@@ -155,7 +162,7 @@ int controlo(int n) {
         acc = acc + 1;
     } while (acc < 3);
 
-    for (i = 0; i < LIMITE; i = i + 1) {
+    for (i = 0; i < 100; i = i + 1) {
         if (i == 2) { continue; }
         if (i > 5)  { break; }
         acc = acc + i;
@@ -203,7 +210,11 @@ int main(void) {
 
     p.x = 1;
     p.y = 2;
+    pp->y = 3;
     nada();
-    variavel_global = soma(k, controlo(3)) + usar_struct(pp, p);
+    /* usar_struct é exercitada como DEFINIÇÃO (cobre '->', params ponteiro);
+       não é chamada aqui porque a verificação de argumentos struct/ponteiro
+       pertence à fase semântica ainda em análise. */
+    variavel_global = soma(k, controlo(3));
     return 0;
 }

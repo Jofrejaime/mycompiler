@@ -254,7 +254,11 @@ void parse_declaracao_global(parser_t *parser, ast_node_t *program_node);
 
 /* Type specifiers */
 int parse_especificador_tipo(parser_t *parser);
-int parse_especificador_tipo_ex(parser_t *parser, char *tag_name_out, size_t out_len);
+/* Variante estendida: captura o tag de struct/union (ou tag base de um typedef
+   de struct) em tag_name_out, e soma em *ptr_extra_out o nível de ponteiro
+   embutido num typedef (ex.: typedef char *texto → +1). Ambos opcionais (NULL). */
+int parse_especificador_tipo_ex(parser_t *parser, char *tag_name_out, size_t out_len,
+                                int *ptr_extra_out);
 
 /* Statements */
 ast_node_t* parse_bloco(parser_t *parser);

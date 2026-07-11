@@ -115,7 +115,8 @@ static int is_typedef_name(parser_t *parser, const char *name);
    Extended variant: if tag_name_out != NULL and out_len > 0, the struct/union
    tag name is written there (e.g. "Ponto" for "struct Ponto").
 */
-int parse_especificador_tipo_ex(parser_t *parser, char *tag_name_out, size_t out_len) {
+int parse_especificador_tipo_ex(parser_t *parser, char *tag_name_out, size_t out_len,
+                                int *ptr_extra_out) {
     token_t token = peek_token(parser);
     
     switch (token.tipo) {
@@ -154,28 +155,52 @@ int parse_especificador_tipo_ex(parser_t *parser, char *tag_name_out, size_t out
             return KW_UNION;
         }
         
-        case TK_ID:
+        case TK_ID: {
             /* Only accept TK_ID here when it's a known typedef name. */
             if (!is_typedef_name(parser, token.lexeme)) {
                 syntax_error(parser, "especificador de tipo esperado (typedef desconhecido)", -1, token);
                 return KW_INT;  /* Default fallback */
             }
+
+            /* Resolver o typedef para o TIPO BASE aqui, para que toda a
+               informação a jusante (AST, tabela de símbolos, semântica) veja
+               o tipo real e não o token TK_ID:
+                 - typedef int inteiro   → devolve KW_INT
+                 - typedef char *texto   → devolve KW_CHAR, *ptr_extra_out = 1
+                 - typedef struct P PP   → devolve KW_STRUCT, tag_name_out = "P" */
+            symbol_info_t *tinfo = lookup_global_symbol(parser, token.lexeme);
+            int resolved_type = TK_ID;
+
+            if (tinfo) {
+                resolved_type = tinfo->data_type;
+                if (ptr_extra_out) {
+                    *ptr_extra_out += tinfo->is_pointer;
+                }
+            }
+
             if (tag_name_out && out_len > 0) {
-                strncpy(tag_name_out, token.lexeme, out_len - 1);
+                const char *tag = token.lexeme;
+                if (tinfo &&
+                    (tinfo->data_type == KW_STRUCT || tinfo->data_type == KW_UNION) &&
+                    tinfo->typedef_base_name[0] != '\0') {
+                    tag = tinfo->typedef_base_name;
+                }
+                strncpy(tag_name_out, tag, out_len - 1);
                 tag_name_out[out_len - 1] = '\0';
             }
             consume_token(parser);
-            return TK_ID;
-        
+            return resolved_type;
+        }
+
         default:
             syntax_error(parser, "especificador de tipo esperado", -1, token);
             return KW_INT;  /* Default fallback */
     }
 }
 
-/* Backward-compatible wrapper: no tag capture */
+/* Backward-compatible wrapper: no tag capture, no pointer bonus capture */
 int parse_especificador_tipo(parser_t *parser) {
-    return parse_especificador_tipo_ex(parser, NULL, 0);
+    return parse_especificador_tipo_ex(parser, NULL, 0, NULL);
 }
 
 /*
@@ -191,14 +216,15 @@ static int is_typedef_name(parser_t *parser, const char *name) {
 }
 
 int is_type_specifier(parser_t *parser, token_t token) {
+    /* Nota: KW_STATIC/KW_EXTERN/KW_CONST existem no léxico mas NÃO fazem parte
+       da gramática (<especificador_tipo>) — não são aceites como início de tipo. */
     if (token.tipo == KW_INT ||
         token.tipo == KW_CHAR ||
         token.tipo == KW_FLOAT ||
         token.tipo == KW_VOID ||
         token.tipo == KW_DOUBLE ||
         token.tipo == KW_STRUCT ||
-        token.tipo == KW_UNION ||
-        token.tipo == KW_STATIC) {
+        token.tipo == KW_UNION) {
         return 1;
     }
 
@@ -220,7 +246,9 @@ int is_type_specifier(parser_t *parser, token_t token) {
 */
 ast_node_t* parse_declaracao_variavel_global(parser_t *parser) {
     char struct_tag_buf[64] = "";
-    int data_type = parse_especificador_tipo_ex(parser, struct_tag_buf, sizeof(struct_tag_buf));
+    int typedef_ptr = 0;   /* nível de ponteiro embutido no typedef (char* → 1) */
+    int data_type = parse_especificador_tipo_ex(parser, struct_tag_buf,
+                                                sizeof(struct_tag_buf), &typedef_ptr);
 
     ast_node_t *first_decl = NULL;  /* First VAR_DECL (returned directly when only one) */
     ast_node_t *wrapper    = NULL;  /* AST_BLOCK wrapper, created on second declarator */
@@ -228,7 +256,7 @@ ast_node_t* parse_declaracao_variavel_global(parser_t *parser) {
 
     do {
         /* Each declarator may have its own pointer stars: int *x, y; */
-        int pointer_level = parse_asteriscos(parser);
+        int pointer_level = parse_asteriscos(parser) + typedef_ptr;
 
         token_t id_token = peek_token(parser);
         expect(parser, TK_ID);  // Consume identifier
@@ -316,9 +344,10 @@ ast_node_t* parse_declaracao_variavel_global(parser_t *parser) {
         info->memory_address = parser->next_global_address;
         parser->next_global_address += total_size;
 
-        if (!add_global_symbol(parser, id_token.lexeme, info)) {
-            report_redeclaration(parser, id_token.lexeme, id_token);
-        }
+        /* A redeclaração no mesmo escopo (alínea b) é reportada pela fase
+           semântica, conforme o enunciado. Aqui apenas construímos a tabela;
+           add_global_symbol devolve 0 num duplicado, que ignoramos. */
+        add_global_symbol(parser, id_token.lexeme, info);
         enrich_symbol_type(parser, id_token.lexeme, data_type, pointer_level);
         enrich_symbol_scope(parser, id_token.lexeme, 0, VAR_GLOBAL);
         enrich_symbol_memory(parser, id_token.lexeme, info->memory_address, total_size);
@@ -365,8 +394,8 @@ ast_node_t* parse_declaracao_variavel_global(parser_t *parser) {
                    | ε
    Parametro → EspecificadorTipo [Asteriscos] [TK_ID [SufixoArray]]
 */
-void parse_lista_parametros(parser_t *parser, ast_node_t *func_node, 
-                            int *param_types, int *param_count) {
+void parse_lista_parametros(parser_t *parser, ast_node_t *func_node,
+                            int *param_types, int *param_ptrs, int *param_count) {
     *param_count = 0;
     
     /* Empty parameter list */
@@ -399,8 +428,10 @@ void parse_lista_parametros(parser_t *parser, ast_node_t *func_node,
         }
 
         char struct_tag_buf[64] = "";
-        int param_type = parse_especificador_tipo_ex(parser, struct_tag_buf, sizeof(struct_tag_buf));
-        int pointer_level = parse_asteriscos(parser);
+        int typedef_ptr = 0;
+        int param_type = parse_especificador_tipo_ex(parser, struct_tag_buf,
+                                                     sizeof(struct_tag_buf), &typedef_ptr);
+        int pointer_level = parse_asteriscos(parser) + typedef_ptr;
 
         /* Name is optional (prototype without parameter names) */
         char param_name_buf[256] = "";
@@ -429,9 +460,10 @@ void parse_lista_parametros(parser_t *parser, ast_node_t *func_node,
         param->operator_type = pointer_level;
         add_ast_child(func_node, param);
         
-        /* Add to parameter types array */
+        /* Add to parameter types array (tipo base + nível de ponteiro) */
         if (*param_count < 32) {
             param_types[*param_count] = param_type;
+            if (param_ptrs) param_ptrs[*param_count] = pointer_level;
             (*param_count)++;
         }
         
@@ -537,8 +569,9 @@ ast_node_t* parse_declaracao_funcao(parser_t *parser, int return_type) {
     
     /* Parse parameters */
     int param_types[32];
+    int param_ptrs[32] = {0};
     int param_count = 0;
-    parse_lista_parametros(parser, func_decl, param_types, &param_count);
+    parse_lista_parametros(parser, func_decl, param_types, param_ptrs, &param_count);
     
     expect(parser, SYM_RPAREN);  // Consume ')'
     
@@ -567,6 +600,7 @@ ast_node_t* parse_declaracao_funcao(parser_t *parser, int return_type) {
     func_info->function_param_count = param_count;
     for (int i = 0; i < param_count; i++) {
         func_info->function_param_types[i] = param_types[i];
+        func_info->function_param_is_pointer[i] = param_ptrs[i];
     }
     func_info->size_bytes = 0;  /* Functions don't have size */
     func_info->memory_address = 0;  /* Functions have code addresses, not data */
@@ -1036,7 +1070,7 @@ void parse_declaracao_global(parser_t *parser, ast_node_t *program_node) {
                 /* struct TAG var ... — treat as variable declaration */
                 parser->current_position = save;
                 ast_node_t *var = parse_declaracao_variavel_global(parser);
-                add_ast_child(program_node, var);
+                add_ast_decl_flat(program_node, var);
                 return;
             }
         } else if (match(parser, SYM_LBRACE)) {
@@ -1064,7 +1098,7 @@ void parse_declaracao_global(parser_t *parser, ast_node_t *program_node) {
             } else {
                 parser->current_position = save;
                 ast_node_t *var = parse_declaracao_variavel_global(parser);
-                add_ast_child(program_node, var);
+                add_ast_decl_flat(program_node, var);
                 return;
             }
         } else if (match(parser, SYM_LBRACE)) {
@@ -1099,7 +1133,7 @@ void parse_declaracao_global(parser_t *parser, ast_node_t *program_node) {
                 /* Variable declaration - backtrack to start */
                 parser->current_position = start_pos;
                 ast_node_t *var = parse_declaracao_variavel_global(parser);
-                add_ast_child(program_node, var);
+                add_ast_decl_flat(program_node, var);
             }
         } else {
             /* Not a valid declaration, restore position */

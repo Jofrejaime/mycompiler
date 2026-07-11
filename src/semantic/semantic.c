@@ -43,6 +43,16 @@ semantic_t* semantic_init(parser_t *parser) {
         return NULL;
     }
 
+    /* Registo de declarações vistas (alínea b) */
+    sem->seen_cap   = 64;
+    sem->seen_count = 0;
+    sem->seen_decls = malloc(sizeof(*sem->seen_decls) * sem->seen_cap);
+    if (!sem->seen_decls) {
+        free(sem->scope_stack);
+        free(sem);
+        return NULL;
+    }
+
     /* O escopo global é sempre o primeiro da pilha */
     sem_push_scope(sem, parser->global_scope);
 
@@ -54,8 +64,43 @@ semantic_t* semantic_init(parser_t *parser) {
 
 void semantic_free(semantic_t *sem) {
     if (!sem) return;
+    free(sem->seen_decls);
     free(sem->scope_stack);
     free(sem);
+}
+
+/*
+   Registar uma declaração no escopo actual durante a travessia da AST.
+   Devolve 1 se (scope_id, name) já tinha sido visto → redeclaração; 0 caso
+   contrário. O scope_id é o do escopo no topo da pilha semântica.
+*/
+int sem_mark_declared(semantic_t *sem, const char *name) {
+    if (!sem || !name || sem->scope_stack_size == 0) return 0;
+
+    int scope_id = sem->scope_stack[sem->scope_stack_size - 1]->scope_id;
+
+    /* Já declarado neste escopo? */
+    for (int i = 0; i < sem->seen_count; i++) {
+        if (sem->seen_decls[i].scope_id == scope_id &&
+            strcmp(sem->seen_decls[i].name, name) == 0) {
+            return 1;  /* redeclaração */
+        }
+    }
+
+    /* Registar a primeira ocorrência */
+    if (sem->seen_count >= sem->seen_cap) {
+        int new_cap = sem->seen_cap * 2;
+        struct seen_decl_s *n = realloc(sem->seen_decls,
+                                        sizeof(*sem->seen_decls) * new_cap);
+        if (!n) return 0;  /* sem memória — não reporta, mas não falha */
+        sem->seen_decls = n;
+        sem->seen_cap   = new_cap;
+    }
+    sem->seen_decls[sem->seen_count].scope_id = scope_id;
+    snprintf(sem->seen_decls[sem->seen_count].name,
+             sizeof(sem->seen_decls[sem->seen_count].name), "%s", name);
+    sem->seen_count++;
+    return 0;
 }
 
 /* ============================================================================

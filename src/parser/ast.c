@@ -62,6 +62,23 @@ void add_ast_child(ast_node_t *parent, ast_node_t *child) {
     parent->children[parent->child_count++] = child;  /* child may be NULL */
 }
 
+void add_ast_decl_flat(ast_node_t *parent, ast_node_t *decl) {
+    if (!parent || !decl) return;
+
+    /* Multi-declaradores (int a, b, c;) chegam num AST_BLOCK artificial que não
+       corresponde a nenhum escopo real — transferir os VAR_DECLs para o pai. */
+    if (decl->type == NODE_BLOCK) {
+        for (int i = 0; i < decl->child_count; i++) {
+            add_ast_child(parent, decl->children[i]);
+        }
+        decl->child_count = 0;  /* filhos transferidos — libertar só o wrapper */
+        free_ast(decl);
+        return;
+    }
+
+    add_ast_child(parent, decl);
+}
+
 ast_node_t* create_binary_op_node(int operator, ast_node_t *left, ast_node_t *right, int line, int column) {
     ast_node_t *node = create_ast_node(NODE_BINARY_OP, NULL, line, column);
     if (!node) return NULL;
